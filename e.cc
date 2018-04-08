@@ -254,7 +254,7 @@ mainloop()
       case 'B': v.cursor_move_char_rel(-1); break;
       case 'A': v.cursor_move_char_abs(0);  break;
       case 'E': v.cursor_move_char_end();   break;
-      case 'M': v.new_line();  break;
+      case 'J': v.new_line();  break;
       case 'G': v.page_down(); break;
       case 'T': v.page_up();   break;
       case 'H': v.cursor_move_row_abs(0); break;
