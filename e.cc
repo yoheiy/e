@@ -144,7 +144,11 @@ Buf::line_length(int n)
 View::View(Buf * buf) :
    buf_(buf),
    window_offset_(0),
+#ifdef MANUAL
+   window_height_(20),
+#else
    window_height_(4),
+#endif
    cursor_row_(0),
    cursor_column_(0)
 {
