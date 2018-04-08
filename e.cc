@@ -284,6 +284,21 @@ View::char_delete_to_eol()
    buf_->replace_line(line, s1);
 }
 
+void
+View::char_delete_to_bol()
+{
+   const int line = window_offset_ + cursor_row_;
+   const char *s0 = buf_->get_line(line);
+   const int len = strlen(s0);
+   const int cc = min(cursor_column_, len);
+   char *s1 = strdup(&s0[cc]);
+   if (!s1) return;
+   cursor_column_ = 0;
+
+   free((void *)s0);
+   buf_->replace_line(line, s1);
+}
+
 #ifdef MANUAL
 void
 mainloop()
@@ -325,6 +340,7 @@ mainloop()
       case 'D': v.char_delete_forward();  break;
       case 'H': v.char_delete_backward(); break;
       case 'K': v.char_delete_to_eol();   break;
+      case 'U': v.char_delete_to_bol();   break;
       }
       tc("ho");
       v.show();
