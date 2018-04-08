@@ -138,9 +138,7 @@ Buf::filename()
 int
 Buf::line_length(int n)
 {
-   if (n < 0) return 0;
-   if (n >= lines.size()) return 0;
-   return strlen(lines[n]);
+   return n < 0 || n >= lines.size() ? 0 : strlen(lines[n]);
 }
 
 View::View(Buf * buf) :
@@ -156,11 +154,8 @@ View::View(Buf * buf) :
 {
 }
 
-int
-min(int a, int b)
-{
-   return (a < b) ? a : b;
-}
+int min(int a, int b) { return (a < b) ? a : b; }
+int max(int a, int b) { return (a > b) ? a : b; }
 
 int
 log10(int n)
@@ -171,6 +166,15 @@ log10(int n)
       n /= 10;
       c++; }
    return c;
+}
+
+int lnum_col(int n) { return n < 0 ? log10(-n) + 2 : log10(n) + 1; }
+
+void
+lnum_padding_out(int n)
+{
+   for (int i = 0; i < n; i++)
+      std::cout << ' ';
 }
 
 void
@@ -188,6 +192,7 @@ View::show()
    std::vector<const char *> v;
    const int from = window_offset_, to = window_offset_ + window_height_;
    const int cursor_line = window_offset_ + cursor_row_;
+   const int lnum_col_max = max(lnum_col(from), lnum_col(to - 1));
 
    buf_->show(v, from, to);
 
@@ -196,6 +201,7 @@ View::show()
    eol_out();
 
    for (int i = from; i < to && i < 0; i++) {
+      lnum_padding_out(lnum_col_max - lnum_col(i));
       std::cout << i << '#';
       if (i == cursor_line) {
          eol_out(); }
@@ -203,18 +209,19 @@ View::show()
 
    int n = (from < 0) ? 0 : from;
    for (auto i : v) {
+      lnum_padding_out(lnum_col_max - lnum_col(n));
       std::cout << n << ": " << i;
       eol_out();
 
       if (n == cursor_line) {
          int m = min(cursor_column_, buf_->line_length(n));
-         for (int j = 0; j < log10(n) + 3 + m; j++)
-            std::cout << ' ';
+         lnum_padding_out(lnum_col_max + 2 + m);
          std::cout << '^';
          eol_out(); }
       ++n; }
 
    for (int i = n; i < to; i++) {
+      lnum_padding_out(lnum_col_max - lnum_col(i));
       std::cout << i << '#';
       if (i == cursor_line) {
          eol_out(); }
