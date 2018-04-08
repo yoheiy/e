@@ -56,6 +56,8 @@ public:
    void char_insert(char c);
    void char_delete_forward();
    void char_delete_backward();
+   void char_delete_to_eol();
+   void char_delete_to_bol();
 private:
    Buf *buf_;
    int  window_offset_;
@@ -263,6 +265,25 @@ View::char_delete_backward()
    return char_delete_forward();
 }
 
+void
+View::char_delete_to_eol()
+{
+   const int line = window_offset_ + cursor_row_;
+   const char *s0 = buf_->get_line(line);
+   const int len = strlen(s0);
+
+   if (cursor_column_ >= len) { return; /* do not join */ }
+
+   const int cc = cursor_column_;
+   char *s1 = (char *)malloc(cc + 1);
+   if (!s1) return;
+   strncpy(s1, s0, cc);
+   s1[cc] = '\0';
+
+   free((void *)s0);
+   buf_->replace_line(line, s1);
+}
+
 #ifdef MANUAL
 void
 mainloop()
@@ -303,6 +324,7 @@ mainloop()
       case 'X': tc("cl"); return;
       case 'D': v.char_delete_forward();  break;
       case 'H': v.char_delete_backward(); break;
+      case 'K': v.char_delete_to_eol();   break;
       }
       tc("ho");
       v.show();
