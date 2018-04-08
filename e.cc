@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <vector>
 #include <iostream>
+#define MANUAL
 
 extern "C" {
    int tc_init();
@@ -53,6 +54,7 @@ public:
 
    void new_line();
    void char_insert(char c);
+   void char_delete_forward();
 private:
    Buf *buf_;
    int  window_offset_;
@@ -205,22 +207,79 @@ View::char_insert(char c)
    buf_->replace_line(line, s1);
 }
 
-#ifdef MANUAL
-#define CLEAR "\x1b\x5b\x48\x1b\x5b\x32\x4a"
 void
-App::mainloop()
+View::char_delete_forward()
+{
+   const int line = window_offset_ + cursor_row_;
+   const char *s0 = buf_->get_line(line);
+   const int len = strlen(s0);
+   char *s1 = (char *)malloc(len);
+   if (!s1) return;
+
+   if (cursor_column_ >= len) { /* TODO join */ }
+
+   const int cc = cursor_column_;
+   strncpy(s1, s0, cc);
+   strcpy(s1 + cc, s0 + cc + 1);
+
+   free((void *)s0);
+   buf_->replace_line(line, s1);
+}
+
+#ifdef MANUAL
+void
+mainloop()
 {
    Buf  b("/usr/share/common-licenses/GPL-3");
    View v(&b);
    char cmd;
-   int mode = 0;
-   int wh = 4;
+   int  wh = 4;
 
+   tc("cl");
+   v.show();
+
+   while (cmd = getchar(), cmd != EOF) {
+      if (cmd >= ' ') {
+         v.char_insert(cmd);
+         tc("ho");
+         v.show();
+         continue; }
+
+      cmd += '@';
+
+      switch (cmd) {
+      case 'N': v.cursor_move_row_rel(+1);  break;
+      case 'P': v.cursor_move_row_rel(-1);  break;
+      case 'F': v.cursor_move_char_rel(+1); break;
+      case 'B': v.cursor_move_char_rel(-1); break;
+      case 'A': v.cursor_move_char_abs(0);  break;
+      case 'E': v.cursor_move_char_end();   break;
+      case 'M': v.new_line();  break;
+      case 'G': v.page_down(); break;
+      case 'T': v.page_up();   break;
+      case 'H': v.cursor_move_row_abs(0); break;
+      case 'L': v.cursor_move_row_end();  break;
+      case 'I': wh++; v.set_window_height(wh); break;
+      case 'O': wh--; v.set_window_height(wh); break;
+      case 'R': v.window_top();     break;
+      case 'Y': v.window_bottom();  break;
+      case 'X': tc("cl"); return;
+      case 'D': v.char_delete_forward();  break;
+      }
+      tc("ho");
+      v.show();
+      tc("cd");
+   }
+}
+
+void
+App::mainloop()
+{
    int fd;
    struct termios ti, ti_orig;
    char ibuf[1], obuf[40];
 
-   if (fd = open("/dev/tty", O_RDWR), fd == -1) return;
+   if (fd = open("/dev/tty", O_RDWR), fd == -1) { perror("open"); return; }
    if (tcgetattr(fd, &ti) == -1) { perror("tcgetattr"); return; }
    ti_orig = ti;
 
@@ -231,52 +290,8 @@ App::mainloop()
       perror("tcsetattr (noncanon)"); return; }
 
    tc_init();
-   tc("cl");
-   v.show();
 
-   while (cmd = getchar(), cmd != EOF) {
-#if 0
-      if (mode == 0 && cmd == '/') {
-         mode = 1;
-         continue; }
-      if (cmd == '\n') {
-         // std::cout << CLEAR;
-         tc("ho");
-         v.show();
-         mode = 0;
-         continue; }
-
-      if (mode == 0) {
-#endif
-      if (cmd >= ' ') {
-         v.char_insert(cmd);
-         tc("ho");
-         v.show();
-         continue; }
-
-      cmd += '@';
-
-      // mode == 1
-      switch (cmd) {
-      case 'N': v.cursor_move_row_rel(+1);  break;
-      case 'P': v.cursor_move_row_rel(-1);  break;
-      case 'F': v.cursor_move_char_rel(+1); break;
-      case 'B': v.cursor_move_char_rel(-1); break;
-      case 'A': v.cursor_move_char_abs(0);  break;
-      case 'E': v.cursor_move_char_end();   break;
-      case 'M': v.new_line();  break;
-      case 'D': v.page_down(); break;
-      case 'U': v.page_up();   break;
-      case 'H': v.cursor_move_row_abs(0); break;
-      case 'L': v.cursor_move_row_end();  break;
-      case 'I': wh++; v.set_window_height(wh); break;
-      case 'O': wh--; v.set_window_height(wh); break;
-      case 'X': v.window_top();     break;
-      case 'Z': v.window_bottom();  break;
-      }
-      tc("ho");
-      v.show();
-   }
+   ::mainloop();
 
 out:
    /* canonical mode */
