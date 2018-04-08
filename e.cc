@@ -50,7 +50,7 @@ public:
    void cursor_move_char_abs(int n) { cursor_column_  = n; }
    void cursor_move_char_rel(int n) { cursor_column_ += n; }
    void cursor_move_char_end()      { cursor_column_  =
-         buf_->line_length(window_offset_ + cursor_row_) - 1; }
+         buf_->line_length(window_offset_ + cursor_row_); }
 
    void new_line();
    void char_insert(char c);
@@ -69,6 +69,20 @@ public:
    void mainloop();
 };
 
+char
+chop(char *s)
+{
+   char c;
+   int  l;
+
+   l = strlen(s);
+   if (!l) return '\0';
+   l--;
+   c = s[l];
+   s[l] = '\0';
+   return c;
+}
+
 Buf::Buf(const char *filename)
 {
    filename_ = strdup(filename);
@@ -77,8 +91,9 @@ Buf::Buf(const char *filename)
    if (!f) return;
 
    char b[80];
-   while (fgets(b, sizeof b, f))
-      lines.push_back(strdup(b));
+   while (fgets(b, sizeof b, f)) {
+      chop(b);
+      lines.push_back(strdup(b)); }
 }
 
 void
@@ -95,7 +110,7 @@ void
 Buf::insert_empty_line(int n)
 {
    auto i = lines.begin() + n;
-   auto s = strdup("\n");
+   auto s = strdup("");
 
    lines.insert(i, s);
 }
@@ -141,6 +156,26 @@ min(int a, int b)
    return (a < b) ? a : b;
 }
 
+int
+log10(int n)
+{
+   int c = 0;
+
+   while (n >= 10) {
+      n /= 10;
+      c++; }
+   return c;
+}
+
+void
+eol_out()
+{
+#ifdef MANUAL
+   tc("ce");
+#endif
+   std::cout << std::endl;
+}
+
 void
 View::show()
 {
@@ -152,33 +187,23 @@ View::show()
 
    std::cout << "== " << buf_->filename() <<
                 " [" << from << ":" << to << "] ==";
-#ifdef MANUAL
-   tc("ce");
-#endif
-   std::cout << std::endl;
+   eol_out();
 
    for (int i = from; i < to && i < 0; i++) {
       std::cout << i << '#';
-#ifdef MANUAL
-      tc("ce");
-#endif
-      std::cout << std::endl; }
+      eol_out(); }
 
    int n = (from < 0) ? 0 : from;
    for (auto i : v) {
-#ifdef MANUAL
-      tc("ce");
-#endif
       std::cout << n << ": " << i;
+      eol_out();
+
       if (n == cursor_line) {
-         std::cout << n << "  ";
-         int m = min(cursor_column_, buf_->line_length(n) - 1);
-         for (int j = 0; j < m; j++)
+         int m = min(cursor_column_, buf_->line_length(n));
+         for (int j = 0; j < log10(n) + 3 + m; j++)
             std::cout << ' ';
-#ifdef MANUAL
-         tc("ce");
-#endif
-         std::cout << '^' << std::endl; }
+         std::cout << '^';
+         eol_out(); }
       ++n; }
 }
 
@@ -197,7 +222,7 @@ View::char_insert(char c)
    char *s1 = (char *)malloc(len + 2); // \0, c
    if (!s1) return;
 
-   if (cursor_column_ >= len) cursor_column_ = len - 1;
+   if (cursor_column_ > len) cursor_column_ = len;
 
    const int cc = cursor_column_++;
    strcpy(s1, s0);
