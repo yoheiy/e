@@ -55,6 +55,7 @@ public:
    void new_line();
    void char_insert(char c);
    void char_delete_forward();
+   void char_delete_backward();
 private:
    Buf *buf_;
    int  window_offset_;
@@ -216,7 +217,7 @@ View::char_delete_forward()
    char *s1 = (char *)malloc(len);
    if (!s1) return;
 
-   if (cursor_column_ >= len) { /* TODO join */ }
+   if (cursor_column_ >= len) { return; /* TODO join */ }
 
    const int cc = cursor_column_;
    strncpy(s1, s0, cc);
@@ -224,6 +225,13 @@ View::char_delete_forward()
 
    free((void *)s0);
    buf_->replace_line(line, s1);
+}
+
+void
+View::char_delete_backward()
+{
+   if (cursor_column_-- == 0) { return; /* TODO join */ }
+   return char_delete_forward();
 }
 
 #ifdef MANUAL
@@ -257,7 +265,7 @@ mainloop()
       case 'J': v.new_line();  break;
       case 'G': v.page_down(); break;
       case 'T': v.page_up();   break;
-      case 'H': v.cursor_move_row_abs(0); break;
+//    case 'H': v.cursor_move_row_abs(0); break;
       case 'L': v.cursor_move_row_end();  break;
       case 'I': wh++; v.set_window_height(wh); break;
       case 'O': wh--; v.set_window_height(wh); break;
@@ -265,6 +273,7 @@ mainloop()
       case 'Y': v.window_bottom();  break;
       case 'X': tc("cl"); return;
       case 'D': v.char_delete_forward();  break;
+      case 'H': v.char_delete_backward(); break;
       }
       tc("ho");
       v.show();
