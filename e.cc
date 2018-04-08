@@ -238,6 +238,8 @@ void
 View::char_insert(char c)
 {
    const int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >=buf_->num_of_lines()) return;
+
    const char *s0 = buf_->get_line(line);
    const int len = strlen(s0);
    char *s1 = (char *)malloc(len + 2); // \0, c
@@ -258,6 +260,8 @@ void
 View::char_delete_forward()
 {
    const int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >=buf_->num_of_lines()) return;
+
    const char *s0 = buf_->get_line(line);
    const int len = strlen(s0);
    char *s1 = (char *)malloc(len);
@@ -284,6 +288,8 @@ void
 View::char_delete_to_eol()
 {
    const int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >=buf_->num_of_lines()) return;
+
    const char *s0 = buf_->get_line(line);
    const int len = strlen(s0);
 
@@ -303,6 +309,8 @@ void
 View::char_delete_to_bol()
 {
    const int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >=buf_->num_of_lines()) return;
+
    const char *s0 = buf_->get_line(line);
    const int len = strlen(s0);
    const int cc = min(cursor_column_, len);
