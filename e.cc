@@ -300,27 +300,41 @@ View::char_delete_to_bol()
 }
 
 #ifdef MANUAL
+#define ESC '\033'
 void
 mainloop()
 {
    Buf  b("/usr/share/common-licenses/GPL-3");
    View v(&b);
-   char cmd;
+   char cmd = '\0', prev_cmd;
    int  wh = 4;
 
    tc("cl");
    v.show();
 
-   while (cmd = getchar(), cmd != EOF) {
-      if (cmd >= ' ') {
+   while (prev_cmd = cmd, cmd = getchar(), cmd != EOF) {
+      if (cmd >= ' ' && prev_cmd != ESC) {
          v.char_insert(cmd);
          tc("ho");
          v.show();
          continue; }
 
-      cmd += '@';
+      if (prev_cmd == ESC) {
+         switch (cmd) {
+      case '<': v.window_top();     break;
+      case '>': v.window_bottom();  break;
+      case 'h': v.cursor_move_row_abs(0); break;
+      case 'l': v.cursor_move_row_end();  break;
+      case 'v': v.page_up();   break;
+      case '+': wh++; v.set_window_height(wh); break;
+      case '-': wh--; v.set_window_height(wh); break;
+         }
+         tc("ho");
+         v.show();
+         tc("cd");
+         continue; }
 
-      switch (cmd) {
+      switch (cmd + '@') {
       case 'N': v.cursor_move_row_rel(+1);  break;
       case 'P': v.cursor_move_row_rel(-1);  break;
       case 'F': v.cursor_move_char_rel(+1); break;
@@ -328,14 +342,7 @@ mainloop()
       case 'A': v.cursor_move_char_abs(0);  break;
       case 'E': v.cursor_move_char_end();   break;
       case 'J': v.new_line();  break;
-      case 'G': v.page_down(); break;
-      case 'T': v.page_up();   break;
-//    case 'H': v.cursor_move_row_abs(0); break;
-      case 'L': v.cursor_move_row_end();  break;
-      case 'I': wh++; v.set_window_height(wh); break;
-      case 'O': wh--; v.set_window_height(wh); break;
-      case 'R': v.window_top();     break;
-      case 'Y': v.window_bottom();  break;
+      case 'V': v.page_down(); break;
       case 'X': tc("cl"); return;
       case 'D': v.char_delete_forward();  break;
       case 'H': v.char_delete_backward(); break;
