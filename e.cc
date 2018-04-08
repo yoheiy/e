@@ -197,6 +197,8 @@ View::show()
 
    for (int i = from; i < to && i < 0; i++) {
       std::cout << i << '#';
+      if (i == cursor_line) {
+         eol_out(); }
       eol_out(); }
 
    int n = (from < 0) ? 0 : from;
@@ -211,6 +213,12 @@ View::show()
          std::cout << '^';
          eol_out(); }
       ++n; }
+
+   for (int i = n; i < to; i++) {
+      std::cout << i << '#';
+      if (i == cursor_line) {
+         eol_out(); }
+      eol_out(); }
 }
 
 void
