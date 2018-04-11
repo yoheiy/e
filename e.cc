@@ -13,6 +13,12 @@ extern "C" {
 
 namespace {
 
+const char *keywords[] = {
+   "free",
+   "freedom",
+   "work",
+};
+
 class Buf {
 public:
    Buf(const char *filename);
@@ -166,10 +172,16 @@ log10(int n)
 int lnum_col(int n) { return n < 0 ? log10(-n) + 2 : log10(n) + 1; }
 
 void
-lnum_padding_out(int n)
+repeated_char_out(int n, char c)
 {
    for (int i = 0; i < n; i++)
-      std::cout << ' ';
+      std::cout << c;
+}
+
+void
+lnum_padding_out(int n)
+{
+   repeated_char_out(n, ' ');
 }
 
 void
@@ -177,6 +189,40 @@ eol_out()
 {
    tc("ce");
    std::cout << std::endl;
+}
+
+void
+keyword_hilit_uline(int n)
+{
+   repeated_char_out(n, '~');
+}
+
+int
+my_strncmp(const char *s0, const char *s1, int n)
+{
+   int r = strncmp(s0, s1, n);
+   return r ?: s1[n];
+}
+
+void
+keyword_hilit(int n, const char *s)
+{
+   const char *s0 = nullptr;
+   const char *s1 = s;
+   bool found = false;
+
+   for (auto i = s; *i; i++) {
+      if (!s0 && isalpha(*i)) s0 = i;
+      if (s0 && !isalpha(*i)) {
+         for (auto k : keywords) {
+            if (my_strncmp(s0, k, i - s0) == 0) {
+               if (!found) { lnum_padding_out(n); found = true; }
+               lnum_padding_out(s0 - s1);
+               keyword_hilit_uline(i - s0);
+               s1 = i;
+               break; } }
+         s0 = nullptr; } }
+   if (found) eol_out();
 }
 
 void
@@ -205,6 +251,8 @@ View::show()
       lnum_padding_out(lnum_col_max - lnum_col(n));
       std::cout << n << ": " << i;
       eol_out();
+
+      keyword_hilit(lnum_col_max + 2, i);
 
       if (n == cursor_line) {
          int m = min(cursor_column_, buf_->line_length(n));
