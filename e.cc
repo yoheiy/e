@@ -322,9 +322,10 @@ mainloop()
    Buf  b("/usr/share/common-licenses/GPL-3");
    View v(&b);
    char cmd = '\0', prev_cmd;
-   int  wh = 4;
+   int  wh = 20;
 
    tc("cl");
+   v.set_window_height(wh);
    v.show();
 
    while (prev_cmd = cmd, cmd = getchar(), cmd != EOF) {
