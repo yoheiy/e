@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <vector>
 #include <iostream>
-#define MANUAL
 
 extern "C" {
    int tc_init();
@@ -144,11 +143,7 @@ Buf::line_length(int n)
 View::View(Buf * buf) :
    buf_(buf),
    window_offset_(0),
-#ifdef MANUAL
    window_height_(20),
-#else
-   window_height_(4),
-#endif
    cursor_row_(0),
    cursor_column_(0)
 {
@@ -180,9 +175,7 @@ lnum_padding_out(int n)
 void
 eol_out()
 {
-#ifdef MANUAL
    tc("ce");
-#endif
    std::cout << std::endl;
 }
 
@@ -322,7 +315,6 @@ View::char_delete_to_bol()
    buf_->replace_line(line, s1);
 }
 
-#ifdef MANUAL
 #define ESC '\033'
 void
 mainloop()
@@ -405,135 +397,6 @@ out:
       perror("tcsetattr (canon)"); return; }
    if (close(fd) == -1) perror("close");
 }
-#else // MANUAL
-void
-App::mainloop()
-{
-   Buf  b0("spam.txt");
-   Buf  b1("eggs.txt");
-   Buf  b2("/usr/share/common-licenses/GPL-3");
-   View v0(&b0);
-   View v1(&b1);
-   View v2(&b2);
-
-   v0.show();
-   v1.show();
-   v2.show();
-
-   std::cout << "[ move view(spam.txt):window_offset <- 2 ]" << std::endl;
-   v0.window_move(2);
-   v0.show();
-
-   std::cout << "[ move view(eggs.txt):window_offset <- 2 ]" << std::endl;
-   v1.window_move(2);
-   v1.show();
-
-   std::cout << "[ set view(GPL-3):window_height <- 12 ]" << std::endl;
-   v2.set_window_height(12);
-   v2.show();
-   std::cout << "[ page down view(GPL-3) ]" << std::endl;
-   v2.page_down();
-   v2.show();
-   std::cout << "[ page down view(GPL-3) ]" << std::endl;
-   v2.page_down();
-   v2.show();
-   std::cout << "[ page down view(GPL-3) ]" << std::endl;
-   v2.page_down();
-   v2.show();
-
-   std::cout << "[ move view(GPL-3):window_offset <- 6 ]" << std::endl;
-   v2.window_move(6);
-   v2.show();
-   std::cout << "[ page up view(GPL-3) ]" << std::endl;
-   v2.page_up();
-   v2.show();
-
-   std::cout << "[ move view(GPL-3):window_offset <- top ]" << std::endl;
-   v2.window_top();
-   v2.show();
-
-   std::cout << "[ move view(GPL-3):window_offset <- bottom ]" << std::endl;
-   v2.window_bottom();
-   v2.show();
-   std::cout << "[ page up view(GPL-3) ]" << std::endl;
-   v2.page_up();
-   v2.show();
-
-   std::cout << "[ set view(GPL-3):window_height <- 4 ]" << std::endl;
-   v2.set_window_height(4);
-   std::cout << "[ move view(GPL-3):window_offset <- 12 ]" << std::endl;
-   v2.window_move(12);
-   v2.show();
-   std::cout << "[ move view(GPL-3):cursor_row <- 1 ]" << std::endl;
-   v2.cursor_move_row_abs(1);
-   v2.show();
-   std::cout << "[ move view(GPL-3):cursor_row <- 2 ]" << std::endl;
-   v2.cursor_move_row_abs(2);
-   v2.show();
-
-   std::cout << "[ move view(GPL-3):window_offset <- top ]" << std::endl;
-   v2.window_top();
-   std::cout << "[ move view(GPL-3):cursor_row <- 3 ]" << std::endl;
-   v2.cursor_move_row_abs(3);
-   std::cout << "[ move view(GPL-3):cursor_char <- EOL ]" << std::endl;
-   v2.cursor_move_char_end();
-   v2.show();
-   std::cout << "[ move view(GPL-3):cursor_row <- 2 ]" << std::endl;
-   v2.cursor_move_row_abs(2);
-   v2.show();
-   std::cout << "[ move view(GPL-3):cursor_row <- 1 ]" << std::endl;
-   v2.cursor_move_row_abs(1);
-   v2.show();
-
-   std::cout << "[ move view(spam.txt):window_offset <- top ]" << std::endl;
-   v0.window_top();
-   std::cout << "[ move view(spam.txt):cursor_row <- 1 ]" << std::endl;
-   v0.cursor_move_row_abs(1);
-   std::cout << "[ insert view(spam.txt):new_line ]" << std::endl;
-   v0.new_line();
-   v0.show();
-   std::cout << "[ insert view(spam.txt):char_insert ]" << std::endl;
-   v0.char_insert('e');
-   v0.show();
-   v0.char_insert('g');
-   v0.show();
-   v0.char_insert('g');
-   v0.show();
-   v0.char_insert('s');
-   v0.show();
-   std::cout << "[ move view(spam.txt):cursor_row <- 2 ]" << std::endl;
-   v0.cursor_move_row_abs(2);
-   std::cout << "[ insert view(spam.txt):char_insert ]" << std::endl;
-   v0.char_insert(' ');
-   v0.show();
-   v0.char_insert('e');
-   v0.show();
-   v0.char_insert('g');
-   v0.show();
-   v0.char_insert('g');
-   v0.show();
-   v0.char_insert('s');
-   v0.show();
-
-   std::cout << "[ move view(eggs.txt):window_offset <- top ]" << std::endl;
-   v1.window_top();
-   std::cout << "[ move view(eggs.txt):cursor_row <- 0 ]" << std::endl;
-   v1.cursor_move_row_abs(0);
-   std::cout << "[ move view(eggs.txt):cursor_char <- EOL ]" << std::endl;
-   v1.cursor_move_char_end();
-   v1.show();
-   std::cout << "[ move view(eggs.txt):cursor_row <- 1 ]" << std::endl;
-   v1.cursor_move_row_abs(1);
-   v1.show();
-   std::cout << "[ insert view(eggs.txt):char_insert ]" << std::endl;
-   v1.char_insert(' ');
-   v1.char_insert('s');
-   v1.char_insert('p');
-   v1.char_insert('a');
-   v1.char_insert('m');
-   v1.show();
-}
-#endif // MANUAL
 
 } // namespace
 
