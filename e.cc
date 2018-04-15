@@ -58,6 +58,11 @@ public:
    void cursor_move_char_end()      { cursor_column_  =
          buf_->line_length(window_offset_ + cursor_row_); }
 
+   void window_centre_cursor() {
+         int t = window_height_ / 2;
+         window_offset_ += cursor_row_ - t;
+         cursor_row_ = t; }
+
    void new_line();
    void char_insert(char c);
    void char_delete_forward();
@@ -406,6 +411,7 @@ mainloop()
       case 'B': v.cursor_move_char_rel(-1); break;
       case 'A': v.cursor_move_char_abs(0);  break;
       case 'E': v.cursor_move_char_end();   break;
+      case 'L': v.window_centre_cursor();   break;
       case 'J': v.new_line();  break;
       case 'V': v.page_down(); break;
       case 'X': tc("cl"); return;
