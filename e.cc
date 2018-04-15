@@ -46,7 +46,8 @@ public:
    void page_up()   { window_offset_ -= window_height_; }
    void window_move(int d) { window_offset_ = d; }
    void window_top()       { window_offset_ = 0; }
-   void window_bottom()    { window_offset_ = buf_->num_of_lines(); }
+   void window_bottom()    { window_offset_ =
+         buf_->num_of_lines() - window_height_; }
    void set_window_height(int n) { window_height_ = n; }
 
    void cursor_move_row_abs(int n)  { cursor_row_     = n; }
