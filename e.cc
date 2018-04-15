@@ -26,6 +26,7 @@ public:
    void dirty() { }
    void show(std::vector<const char *> &v, int from, int to);
 
+   void delete_line(int n);
    void insert_empty_line(int n);
    void replace_line(int n, const char* s);
 
@@ -63,6 +64,7 @@ public:
          window_offset_ += cursor_row_ - t;
          cursor_row_ = t; }
 
+   void join();
    void new_line();
    void insert_new_line();
    void char_insert(char c);
@@ -118,6 +120,15 @@ Buf::show(std::vector<const char *> &v, int from, int to)
       if (n >= from && n < to) {
          v.push_back(i); }
       ++n; }
+}
+
+void
+Buf::delete_line(int n)
+{
+   auto i = lines.begin() + n;
+   free((void *)*i);
+
+   lines.erase(i);
 }
 
 void
@@ -284,6 +295,29 @@ View::show()
 }
 
 void
+View::join()
+{
+   int line = window_offset_ + cursor_row_;
+   const char *s0 = buf_->get_line(line);
+   const char *s1 = buf_->get_line(line + 1);
+
+   if (!*s0) return buf_->delete_line(line);
+   if (!*s1) return buf_->delete_line(line + 1);
+
+   const int len = strlen(s0) + 1 + strlen(s1);
+   char *s = (char *)malloc(len + 1);
+   if (!s) return;
+
+   strcpy(s, s0);
+   strcat(s, " ");
+   strcat(s, s1);
+   free((void *)s0);
+   free((void *)s1);
+   buf_->replace_line(line, s);
+   buf_->delete_line(line + 1);
+}
+
+void
 View::new_line()
 {
    buf_->insert_empty_line(window_offset_ + cursor_row_++);
@@ -423,6 +457,7 @@ mainloop()
          switch (cmd) {
       case '<': v.window_top();     break;
       case '>': v.window_bottom();  break;
+      case 'j': v.join(); break;
       case 'h': v.cursor_move_row_abs(0); break;
       case 'l': v.cursor_move_row_end();  break;
       case 'v': v.page_up();   break;
