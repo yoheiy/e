@@ -64,6 +64,7 @@ public:
          cursor_row_ = t; }
 
    void new_line();
+   void insert_new_line();
    void char_insert(char c);
    void char_delete_forward();
    void char_delete_backward();
@@ -285,7 +286,29 @@ View::show()
 void
 View::new_line()
 {
-   buf_->insert_empty_line(window_offset_ + cursor_row_);
+   buf_->insert_empty_line(window_offset_ + cursor_row_++);
+}
+
+void
+View::insert_new_line()
+{
+   int line = window_offset_ + cursor_row_;
+   char *s0 = (char *)buf_->get_line(line);
+
+   if (!*s0) return new_line();
+
+   const int len = strlen(s0);
+   const char *t, *b; // top, bottom
+   b = strdup(&s0[cursor_column_]);
+   s0[cursor_column_] = '\0';
+   t = strdup(s0);
+
+   free((void *)s0);
+   cursor_row_++;
+   cursor_column_ = 0;
+   buf_->insert_empty_line(line);
+   buf_->replace_line(line++, t);
+   buf_->replace_line(line,   b);
 }
 
 void
@@ -419,7 +442,7 @@ mainloop()
       case 'A': v.cursor_move_char_abs(0);  break;
       case 'E': v.cursor_move_char_end();   break;
       case 'L': v.window_centre_cursor();   break;
-      case 'J': v.new_line();  break;
+      case 'J': v.insert_new_line(); break;
       case 'V': v.page_down(); break;
       case 'X': tc("cl"); return;
       case 'D': v.char_delete_forward();  break;
