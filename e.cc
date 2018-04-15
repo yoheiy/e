@@ -228,6 +228,13 @@ keyword_hilit(int n, const char *s)
                s1 = i;
                break; } }
          s0 = nullptr; } }
+   if (s0)
+      for (auto k : keywords)
+         if (strcmp(s0, k) == 0) {
+            if (!found) { lnum_padding_out(n); found = true; }
+            lnum_padding_out(s0 - s1);
+            keyword_hilit_uline(strlen(s0));
+            break; }
    if (found) eol_out();
 }
 
