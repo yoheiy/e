@@ -60,6 +60,8 @@ public:
    void cursor_move_char_rel(int n) { cursor_column_ += n; }
    void cursor_move_char_end()      { cursor_column_  =
          buf_->line_length(window_offset_ + cursor_row_); }
+   void cursor_move_word_next();
+   void cursor_move_word_prev();
 
    void window_centre_cursor() {
          int t = window_height_ / 2;
@@ -309,6 +311,38 @@ View::show()
 }
 
 void
+View::cursor_move_word_next()
+{
+   const int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >= buf_->num_of_lines()) return;
+
+   const char *s = buf_->get_line(line);
+   const int len = strlen(s);
+
+   int i = cursor_column_;
+   for (; i < len &&  isalpha(s[i]); i++) ;
+   for (; i < len && !isalpha(s[i]); i++) ;
+   cursor_column_ = i;
+}
+
+void
+View::cursor_move_word_prev()
+{
+   const int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >= buf_->num_of_lines()) return;
+
+   const char *s = buf_->get_line(line);
+   const int len = strlen(s);
+   if (cursor_column_ > len) cursor_column_ = len;
+   if (cursor_column_ == 0) return;
+
+   int i = cursor_column_;
+   for (; i > 0 &&  isalpha(s[i]); i--) ;
+   for (; i > 0 && !isalpha(s[i]); i--) ;
+   cursor_column_ = i;
+}
+
+void
 View::join()
 {
    int line = window_offset_ + cursor_row_;
@@ -475,6 +509,8 @@ mainloop()
       case '<': v.window_top();     break;
       case '>': v.window_bottom();  break;
       case 'j': v.join(); break;
+      case 'f': v.cursor_move_word_next();  break;
+      case 'b': v.cursor_move_word_prev();  break;
       case 'h': v.cursor_move_row_abs(0); break;
       case 'l': v.cursor_move_row_end();  break;
       case 'v': v.page_up();   break;
