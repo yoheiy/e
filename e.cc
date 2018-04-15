@@ -13,6 +13,8 @@ extern "C" {
 
 namespace {
 
+const char *filename;
+
 const char *keywords[] = {
    "free",
    "freedom",
@@ -449,7 +451,7 @@ View::char_delete_to_bol()
 void
 mainloop()
 {
-   Buf  b("e.txt");
+   Buf  b(filename);
    View v(&b);
    char cmd = '\0', prev_cmd;
    int  wh = 20;
@@ -535,9 +537,11 @@ out:
 } // namespace
 
 int
-main()
+main(int argc, char *argv[])
 {
    App a;
+
+   filename = (argc == 1) ? "e.txt" : argv[1];
 
    a.mainloop();
 }
