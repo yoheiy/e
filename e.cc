@@ -296,7 +296,7 @@ View::show()
       if (n == cursor_line) {
          int m = min(cursor_column_, buf_->line_length(n));
          lnum_padding_out(lnum_col_max + 2 + m);
-         std::cout << '^';
+         std::cout << '^' << m;
          eol_out(); }
       ++n; }
 
