@@ -341,6 +341,7 @@ void
 View::insert_new_line()
 {
    int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >=buf_->num_of_lines()) return;
    char *s0 = (char *)buf_->get_line(line);
 
    if (!*s0) return new_line();
@@ -363,7 +364,9 @@ void
 View::char_insert(char c)
 {
    const int line = window_offset_ + cursor_row_;
-   if (line < 0 || line >=buf_->num_of_lines()) return;
+   if (line < 0 || line > buf_->num_of_lines()) return;
+   if (line == buf_->num_of_lines())
+      buf_->insert_empty_line(line);
 
    const char *s0 = buf_->get_line(line);
    const int len = strlen(s0);
