@@ -22,7 +22,7 @@ const char *keywords[] = {
 class Buf {
 public:
    Buf(const char *filename);
-   void save() { }
+   void save();
    void dirty() { }
    void show(std::vector<const char *> &v, int from, int to);
 
@@ -110,6 +110,18 @@ Buf::Buf(const char *filename)
    while (fgets(b, sizeof b, f)) {
       chop(b);
       lines.push_back(strdup(b)); }
+}
+
+void
+Buf::save()
+{
+   FILE *f = fopen(filename_, "w");
+   if (!f) return;
+
+   for (auto i : lines) {
+      fputs(i,    f);
+      fputc('\n', f); }
+   if (fclose(f) == EOF) return;
 }
 
 void
@@ -437,7 +449,7 @@ View::char_delete_to_bol()
 void
 mainloop()
 {
-   Buf  b("/usr/share/common-licenses/GPL-3");
+   Buf  b("e.txt");
    View v(&b);
    char cmd = '\0', prev_cmd;
    int  wh = 20;
@@ -463,6 +475,7 @@ mainloop()
       case 'v': v.page_up();   break;
       case '+': wh++; v.set_window_height(wh); break;
       case '-': wh--; v.set_window_height(wh); break;
+      case 's': b.save(); break;
          }
          tc("ho");
          v.show();
