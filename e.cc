@@ -239,6 +239,21 @@ keyword_hilit_uline(int n)
    repeated_char_out(n, '~');
 }
 
+void
+show_ruler(int padding, int col)
+{
+   tc("ce");
+   lnum_padding_out(padding);
+   for (int i = 1; i < 10; i++)
+      printf("0    %3o", i);
+   std::cout << '0';
+
+   tc("cr");
+   for (int i = 0; i < padding + col; i++)
+      tc("nd");
+   std::cout << '*' << std::endl;
+}
+
 int
 my_strncmp(const char *s0, const char *s1, int n)
 {
@@ -288,6 +303,8 @@ View::show()
                 (buf_->dirty() ? " *" : "") <<
                 " [" << from << ":" << to << "] ==";
    eol_out();
+
+   show_ruler(lnum_col_max + 2, cursor_column_);
 
    for (int i = from; i < to && i < 0; i++) {
       lnum_padding_out(lnum_col_max - lnum_col(i));
