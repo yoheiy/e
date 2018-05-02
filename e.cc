@@ -13,8 +13,6 @@ extern "C" {
 
 namespace {
 
-const char *filename;
-
 const char *keywords[] = {
    "free",
    "freedom",
@@ -86,7 +84,12 @@ private:
 
 class App {
 public:
+   App(char **a);
+   void go();
+private:
    void mainloop();
+
+   const char *filename_;
 };
 
 char
@@ -486,9 +489,9 @@ View::char_delete_to_bol()
 
 #define ESC '\033'
 void
-mainloop()
+App::mainloop()
 {
-   Buf  b(filename);
+   Buf  b(filename_);
    View v(&b);
    char cmd = '\0', prev_cmd;
    int  wh = 20;
@@ -546,7 +549,7 @@ mainloop()
 }
 
 void
-App::mainloop()
+App::go()
 {
    int fd;
    struct termios ti, ti_orig;
@@ -564,7 +567,7 @@ App::mainloop()
 
    tc_init();
 
-   ::mainloop();
+   mainloop();
 
 out:
    /* canonical mode */
@@ -573,14 +576,17 @@ out:
    if (close(fd) == -1) perror("close");
 }
 
+App::App(char **a)
+{
+   filename_ = a[1] ?: "e.txt";
+}
+
 } // namespace
 
 int
 main(int argc, char *argv[])
 {
-   App a;
+   App a{argv};
 
-   filename = (argc == 1) ? "e.txt" : argv[1];
-
-   a.mainloop();
+   a.go();
 }
