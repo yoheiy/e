@@ -22,6 +22,7 @@ const char *keywords[] = {
 class Str { // UTF-8 string
 public:
    Str(const char *s) : s_(s) { }
+   int operator[](int index) { return s_[index]; }
    int len()  { return strlen(s_); } // chars
    int size() { return strlen(s_); } // bytes
    int index_chars_to_bytes(int n) { return n; }
@@ -125,7 +126,7 @@ Buf::Buf(const char *filename) : dirty_(false)
    FILE *f = fopen(filename, "r");
    if (!f) return;
 
-   char b[80];
+   char b[160];
    while (fgets(b, sizeof b, f)) {
       chop(b);
       lines.push_back(strdup(b)); }
@@ -196,7 +197,7 @@ Buf::filename()
 int
 Buf::line_length(int n)
 {
-   return n < 0 || n >= lines.size() ? 0 : strlen(lines[n]);
+   return n < 0 || n >= lines.size() ? 0 : Str(lines[n]).len();
 }
 
 View::View(Buf * buf) :
@@ -353,8 +354,8 @@ View::cursor_move_word_next()
    const int line = window_offset_ + cursor_row_;
    if (line < 0 || line >= buf_->num_of_lines()) return;
 
-   const char *s = buf_->get_line(line);
-   const int len = strlen(s);
+   Str s { buf_->get_line(line) };
+   const int len = s.len();
 
    int i = cursor_column_;
    for (; i < len &&  isalpha(s[i]); i++) ;
@@ -368,8 +369,9 @@ View::cursor_move_word_prev()
    const int line = window_offset_ + cursor_row_;
    if (line < 0 || line >= buf_->num_of_lines()) return;
 
-   const char *s = buf_->get_line(line);
-   const int len = strlen(s);
+   Str s { buf_->get_line(line) };
+   const int len = s.len();
+
    if (cursor_column_ > len) cursor_column_ = len;
    if (cursor_column_ == 0) return;
 
@@ -417,10 +419,12 @@ View::insert_new_line()
 
    if (!*s0) return new_line();
 
-   const int len = strlen(s0);
+   Str s { s0 };
+   const int len = s.len();
+   const int index = s.index_chars_to_bytes(cursor_column_);
    const char *t, *b; // top, bottom
-   b = strdup(&s0[cursor_column_]);
-   s0[cursor_column_] = '\0';
+   b = strdup(&s0[index]);
+   s0[index] = '\0';
    t = strdup(s0);
 
    free((void *)s0);
@@ -440,17 +444,20 @@ View::char_insert(char c)
       buf_->insert_empty_line(line);
 
    const char *s0 = buf_->get_line(line);
-   const int len = strlen(s0);
-   char *s1 = (char *)malloc(len + 2); // \0, c
+   Str s { s0 };
+   const int size = s.size();
+   char *s1 = (char *)malloc(size + 2); // \0, c
    if (!s1) return;
 
+   const int len = s.len();
    if (cursor_column_ > len) cursor_column_ = len;
 
-   const int cc = cursor_column_++;
+   const int index = s.index_chars_to_bytes(cursor_column_);
    strcpy(s1, s0);
-   s1[cc] = c;
-   strcpy(s1 + cc + 1, s0 + cc);
+   s1[index] = c;
+   strcpy(s1 + index + 1, s0 + index);
 
+   cursor_column_++;
    free((void *)s0);
    buf_->replace_line(line, s1);
 }
@@ -462,15 +469,18 @@ View::char_delete_forward()
    if (line < 0 || line >=buf_->num_of_lines()) return;
 
    const char *s0 = buf_->get_line(line);
-   const int len = strlen(s0);
-   char *s1 = (char *)malloc(len);
+   Str s { s0 };
+   const int size = s.size();
+   char *s1 = (char *)malloc(size);
    if (!s1) return;
 
+   const int len = s.len();
    if (cursor_column_ >= len) { return; /* TODO join */ }
 
-   const int cc = cursor_column_;
-   strncpy(s1, s0, cc);
-   strcpy(s1 + cc, s0 + cc + 1);
+   const int index0 = s.index_chars_to_bytes(cursor_column_);
+   const int index1 = s.index_chars_to_bytes(cursor_column_ + 1);
+   strncpy(s1, s0, index0);
+   strcpy(s1 + index0, s0 + index1);
 
    free((void *)s0);
    buf_->replace_line(line, s1);
@@ -490,15 +500,16 @@ View::char_delete_to_eol()
    if (line < 0 || line >=buf_->num_of_lines()) return;
 
    const char *s0 = buf_->get_line(line);
-   const int len = strlen(s0);
+   Str s { s0 };
+   const int len = s.len();
 
    if (cursor_column_ >= len) { return; /* do not join */ }
 
-   const int cc = cursor_column_;
-   char *s1 = (char *)malloc(cc + 1);
+   const int index = s.index_chars_to_bytes(cursor_column_);
+   char *s1 = (char *)malloc(index + 1);
    if (!s1) return;
-   strncpy(s1, s0, cc);
-   s1[cc] = '\0';
+   strncpy(s1, s0, index);
+   s1[index] = '\0';
 
    free((void *)s0);
    buf_->replace_line(line, s1);
@@ -511,9 +522,11 @@ View::char_delete_to_bol()
    if (line < 0 || line >=buf_->num_of_lines()) return;
 
    const char *s0 = buf_->get_line(line);
-   const int len = strlen(s0);
+   Str s { s0 };
+   const int len = s.len();
    const int cc = min(cursor_column_, len);
-   char *s1 = strdup(&s0[cc]);
+   const int index = s.index_chars_to_bytes(cc);
+   char *s1 = strdup(&s0[index]);
    if (!s1) return;
    cursor_column_ = 0;
 
