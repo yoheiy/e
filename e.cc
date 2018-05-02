@@ -22,14 +22,33 @@ const char *keywords[] = {
 class Str { // UTF-8 string
 public:
    Str(const char *s) : s_(s) { }
-   int operator[](int index) { return s_[index]; }
-   int len()  { return strlen(s_); } // chars
+   int operator[](int index) { return s_[index_chars_to_bytes(index)]; }
+   int len(); // chars
    int size() { return strlen(s_); } // bytes
-   int index_chars_to_bytes(int n) { return n; }
+   int index_chars_to_bytes(int n);
    int index_bytes_to_chars(int n) { return n; }
 private:
    const char *s_;
 };
+
+int
+Str::len()
+{
+   int l = 0;
+   for (const char *i = s_; *i; i++)
+      if ((*i & 0xc0) != 0x80) l++;
+   return l;
+}
+
+int
+Str::index_chars_to_bytes(int n)
+{
+   int l = 0;
+   for (const char *i = s_; *i; i++)
+      if ((*i & 0xc0) != 0x80 && l++ == n)
+         return i - s_;
+   return size();
+}
 
 class Buf {
 public:
