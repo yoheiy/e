@@ -19,6 +19,17 @@ const char *keywords[] = {
    "work",
 };
 
+class Str { // UTF-8 string
+public:
+   Str(const char *s) : s_(s) { }
+   int len()  { return strlen(s_); } // chars
+   int size() { return strlen(s_); } // bytes
+   int index_chars_to_bytes(int n) { return n; }
+   int index_bytes_to_chars(int n) { return n; }
+private:
+   const char *s_;
+};
+
 class Buf {
 public:
    Buf(const char *filename);
@@ -80,7 +91,7 @@ private:
    int  window_offset_;
    int  window_height_;
    int  cursor_row_;
-   int  cursor_column_;
+   int  cursor_column_; // chars
 };
 
 class App {
