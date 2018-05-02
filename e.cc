@@ -23,7 +23,7 @@ class Buf {
 public:
    Buf(const char *filename);
    void save();
-   void dirty() { }
+   bool dirty() { return dirty_; }
    void show(std::vector<const char *> &v, int from, int to);
 
    void delete_line(int n);
@@ -37,6 +37,7 @@ public:
 private:
    const char *filename_;
    std::vector<const char *> lines;
+   bool dirty_;
 };
 
 class View {
@@ -106,7 +107,7 @@ chop(char *s)
    return c;
 }
 
-Buf::Buf(const char *filename)
+Buf::Buf(const char *filename) : dirty_(false)
 {
    filename_ = strdup(filename);
 
@@ -129,6 +130,7 @@ Buf::save()
       fputs(i,    f);
       fputc('\n', f); }
    if (fclose(f) == EOF) return;
+   dirty_ = false;
 }
 
 void
@@ -148,6 +150,7 @@ Buf::delete_line(int n)
    free((void *)*i);
 
    lines.erase(i);
+   dirty_ = true;
 }
 
 void
@@ -157,12 +160,14 @@ Buf::insert_empty_line(int n)
    auto s = strdup("");
 
    lines.insert(i, s);
+   dirty_ = true;
 }
 
 void
 Buf::replace_line(int n, const char* s)
 {
    lines.at(n) = s;
+   dirty_ = true;
 }
 
 const char *
@@ -280,6 +285,7 @@ View::show()
    buf_->show(v, from, to);
 
    std::cout << "== " << buf_->filename() <<
+                (buf_->dirty() ? " *" : "") <<
                 " [" << from << ":" << to << "] ==";
    eol_out();
 
