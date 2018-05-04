@@ -422,15 +422,13 @@ View::join()
    if (!*s0) return buf_->delete_line(line);
    if (!*s1) return buf_->delete_line(line + 1);
 
-   const int len = strlen(s0) + 1 + strlen(s1);
+   const int len = strlen(s0) + strlen(s1);
    char *s = (char *)malloc(len + 1);
    if (!s) return;
 
    strcpy(s, s0);
-   strcat(s, " ");
    strcat(s, s1);
    free((void *)s0);
-   free((void *)s1);
    buf_->replace_line(line, s);
    buf_->delete_line(line + 1);
 }
@@ -506,7 +504,9 @@ View::char_delete_forward()
    if (!s1) return;
 
    const int len = s.len();
-   if (cursor_column_ >= len) { return; /* TODO join */ }
+   if (cursor_column_ >= len) {
+      cursor_move_char_end();
+      return join(); }
 
    const int index0 = s.index_chars_to_bytes(cursor_column_);
    const int index1 = s.index_chars_to_bytes(cursor_column_ + 1);
@@ -520,8 +520,13 @@ View::char_delete_forward()
 void
 View::char_delete_backward()
 {
-   if (cursor_column_-- == 0) { return; /* TODO join */ }
-   return char_delete_forward();
+   if (cursor_column_--)
+      return char_delete_forward();
+   if (cursor_row_-- > 0) {
+      cursor_move_char_end();
+      return join(); }
+   else
+      cursor_column_ = cursor_row_ = 0;
 }
 
 void
