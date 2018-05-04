@@ -26,7 +26,7 @@ public:
    int len(); // chars
    int size() { return strlen(s_); } // bytes
    int index_chars_to_bytes(int n);
-   int index_bytes_to_chars(int n) { return n; }
+   int index_bytes_to_chars(int n);
 private:
    const char *s_;
 };
@@ -48,6 +48,16 @@ Str::index_chars_to_bytes(int n)
       if ((*i & 0xc0) != 0x80 && l++ == n)
          return i - s_;
    return size();
+}
+
+int
+Str::index_bytes_to_chars(int n)
+{
+   int l = 0;
+   const char *i = s_;
+   for (; n; i++, n--)
+      if ((*i & 0xc0) != 0x80) l++;
+   return l;
 }
 
 class Buf {
@@ -305,7 +315,8 @@ keyword_hilit(int n, const char *s)
          for (auto k : keywords) {
             if (my_strncmp(s0, k, i - s0) == 0) {
                if (!found) { lnum_padding_out(n); found = true; }
-               lnum_padding_out(s0 - s1);
+               Str s { s1 };
+               lnum_padding_out(s.index_bytes_to_chars(s0 - s1));
                keyword_hilit_uline(i - s0);
                s1 = i;
                break; } }
@@ -314,7 +325,8 @@ keyword_hilit(int n, const char *s)
       for (auto k : keywords)
          if (strcmp(s0, k) == 0) {
             if (!found) { lnum_padding_out(n); found = true; }
-            lnum_padding_out(s0 - s1);
+            Str s { s1 };
+            lnum_padding_out(s.index_bytes_to_chars(s0 - s1));
             keyword_hilit_uline(strlen(s0));
             break; }
    if (found) eol_out();
