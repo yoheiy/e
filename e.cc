@@ -22,14 +22,42 @@ const char *keywords[] = {
 class Str { // UTF-8 string
 public:
    Str(const char *s) : s_(s) { }
-   int operator[](int index) { return s_[index_chars_to_bytes(index)]; }
+   int operator[](int index);
    int len(); // chars
    int size() { return strlen(s_); } // bytes
    int index_chars_to_bytes(int n);
    int index_bytes_to_chars(int n);
 private:
    const char *s_;
+   static int char_size(const char *c);
 };
+
+int
+Str::char_size(const char *c)
+{
+   for (int i = 0; i < 8; i++)
+      if (!((*c << i) & 0x80))
+         return i;
+   return -1;
+}
+
+int
+Str::operator[](int index)
+{
+   auto s = &s_[index_chars_to_bytes(index)];
+   int l, r;
+
+   switch (l = char_size(s)) {
+   case 0:
+      return *s;
+   case 2 ... 6:
+      r = (0x7f >> l) & *s;
+      for (int i = 1; i < l; i++)
+         r = (r << 6) | (s[i] & 0x3f);
+      return r;
+   default:
+      return -1; }
+}
 
 int
 Str::len()
@@ -366,8 +394,10 @@ View::show()
 
       if (n == cursor_line) {
          int m = min(cursor_column_, buf_->line_length(n));
+         int c = Str(i)[m];
          lnum_padding_out(lnum_col_max + 2 + m);
          std::cout << '^' << m;
+         std::cout << '#' << std::hex << c << std::dec;
          eol_out(); }
       ++n; }
 
