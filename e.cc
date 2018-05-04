@@ -13,7 +13,7 @@ extern "C" {
 
 namespace {
 
-const char *keywords[] = {
+std::vector<const char *> keywords {
    "free",
    "freedom",
    "work",
@@ -136,6 +136,7 @@ public:
          window_offset_ += cursor_row_ - t;
          cursor_row_ = t; }
 
+   void keyword_toggle();
    void join();
    void new_line();
    void insert_new_line();
@@ -443,6 +444,30 @@ View::cursor_move_word_prev()
 }
 
 void
+View::keyword_toggle()
+{
+   const int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >= buf_->num_of_lines()) return;
+
+   Str s { buf_->get_line(line) };
+   const int len = s.len();
+   if (cursor_column_ >= len) return;
+
+   int cc = cursor_column_, i0, i1;
+   if (!isalpha(s[cc])) return;
+   for (int i = cc; i >= 0  && isalpha(s[i]); i--) i0 = i;
+   for (int i = cc; i < len && isalpha(s[i]); i++) i1 = i + 1;
+   int b0 = s.index_chars_to_bytes(i0);
+   int b1 = s.index_chars_to_bytes(i1);
+   int size = b1 - b0;
+   char *buf = (char *)malloc(size + 1);
+   memcpy(buf, &buf_->get_line(line)[b0], size);
+   buf[size] = '\0';
+
+   keywords.push_back((const char *)buf);
+}
+
+void
 View::join()
 {
    int line = window_offset_ + cursor_row_;
@@ -633,6 +658,7 @@ App::mainloop()
       case '+': wh++; v.set_window_height(wh); break;
       case '-': wh--; v.set_window_height(wh); break;
       case 's': b.save(); break;
+      case 'k': v.keyword_toggle(); break;
          }
          tc("ho");
          v.show();
