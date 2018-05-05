@@ -133,6 +133,8 @@ public:
          window_offset_ += cursor_row_ - t;
          cursor_row_ = t; }
 
+   void keyword_search_next();
+   void keyword_search_prev() { }
    void keyword_toggle();
    void join();
    void new_line();
@@ -456,6 +458,50 @@ View::cursor_move_word_prev()
 }
 
 void
+View::keyword_search_next()
+{
+   std::vector<const char *> v;
+   const int from = window_offset_ + cursor_row_;
+   const int to   = window_offset_ + window_height_;
+   buf_->show(v, from, to);
+
+   int ci, cj;
+   for (int i = 0; i < to - from; i++)
+   {
+      const char *s0 = nullptr;
+      const char *s1 = v[i];
+      Str s { s1 };
+
+      if (!i) { // line where cursor points to
+         int d = s.index_chars_to_bytes(cursor_column_ + 1);
+         s1 += d;
+         if (d > s.len()) return; }
+
+      for (auto j = s1; *j; j++) {
+         if (!s0 && isalpha(*j)) s0 = j;
+         if (s0 && !isalpha(*j)) {
+            for (auto k : keywords) {
+               if (my_strncmp(s0, k, j - s0) == 0) {
+                  Str s { s1 };
+                  ci = i;
+                  cj = s.index_bytes_to_chars(s0 - v[i]);
+                  goto found; } }
+            s0 = nullptr; } }
+      if (s0)
+         for (auto k : keywords)
+            if (strcmp(s0, k) == 0) {
+               Str s { s1 };
+               ci = i;
+               cj = s.index_bytes_to_chars(s0 - v[i]);
+               goto found; }
+   }
+   return;
+found:
+   cursor_row_ += ci;
+   cursor_column_ = cj;
+}
+
+void
 View::keyword_toggle()
 {
    const int line = window_offset_ + cursor_row_;
@@ -679,6 +725,8 @@ App::mainloop()
       case '-': wh--; v.set_window_height(wh); break;
       case 's': b.save(); break;
       case 'k': v.keyword_toggle(); break;
+      case 'n': v.keyword_search_next(); break;
+      case 'p': v.keyword_search_prev(); break;
          }
          tc("ho");
          v.show();
