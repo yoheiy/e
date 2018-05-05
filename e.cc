@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 extern "C" {
    int tc_init();
@@ -13,11 +14,7 @@ extern "C" {
 
 namespace {
 
-std::vector<const char *> keywords {
-   "free",
-   "freedom",
-   "work",
-};
+std::vector<const char *> keywords;
 
 class Str { // UTF-8 string
 public:
@@ -464,7 +461,15 @@ View::keyword_toggle()
    memcpy(buf, &buf_->get_line(line)[b0], size);
    buf[size] = '\0';
 
-   keywords.push_back((const char *)buf);
+   auto i = find_if(keywords.begin(), keywords.end(), [&buf](const char *s) {
+         return strcmp(s, buf) == 0; });
+   if (i == keywords.end())
+      // append keyword
+      keywords.push_back((const char *)buf);
+   else {
+      // delete keyword
+      free((void *)*i);
+      keywords.erase(i); }
 }
 
 void
