@@ -196,6 +196,7 @@ public:
    void show_rot13();
    void join();
    void transpose_lines();
+   void transpose_chars();
    void new_line();
    void insert_new_line();
    void char_insert(char c);
@@ -603,6 +604,35 @@ View::transpose_lines()
    buf_->replace_line(line + 1, s0);
 }
 
+// +-0-+-1-+      +-0-+-1-+
+// | A | B |  =>  | B | A |
+// 0---1---2      0---1---2
+//       ^              ^
+void
+View::transpose_chars()
+{
+   int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >= buf_->num_of_lines()) return;
+   const char *s0 = buf_->get_line(line);
+   if (!s0) return;
+   char *s1 = strdup(s0);
+   if (!s1) return;
+   Str s { s1 };
+   int cc = cursor_column_;
+   if (cc >= s.len()) cc = s.len() - 1;
+   if (cc < 1) return;
+   int offset0 = s.index_chars_to_bytes(cc - 1);
+   int offset1 = s.index_chars_to_bytes(cc);
+   int offset2 = s.index_chars_to_bytes(cc + 1);
+   if (offset1 - offset0 == 1 && offset2 - offset1 == 1) {
+      auto t = s1[offset0];
+      s1[offset0] = s1[offset1];
+      s1[offset1] = t; }
+   else { /* TODO non-ascii char */ }
+   free((void *)s0);
+   buf_->replace_line(line, s1);
+}
+
 void
 View::new_line()
 {
@@ -793,6 +823,7 @@ App::mainloop()
       case 'E': v.cursor_move_char_end();   break;
       case 'L': v.window_centre_cursor();   break;
       case 'J': v.insert_new_line(); break;
+      case 'T': v.transpose_chars(); break;
       case 'V': v.page_down(); break;
       case 'X': tc("cl"); return;
       case 'D': v.char_delete_forward();  break;
