@@ -604,10 +604,10 @@ View::transpose_lines()
    buf_->replace_line(line + 1, s0);
 }
 
-// +-0-+-1-+      +-0-+-1-+
-// | A | B |  =>  | B | A |
-// 0---1---2      0---1---2
-//       ^              ^
+// +-0-+-1-+-2-+      +-0-+-1-+-2-+
+// | A | B |   |  =>  | B | A |   |
+// 0---1---2---+      0---1---2---+
+//           ^                  ^
 void
 View::transpose_chars()
 {
@@ -619,11 +619,11 @@ View::transpose_chars()
    if (!s1) return;
    Str s { s1 };
    int cc = cursor_column_;
-   if (cc >= s.len()) cc = s.len() - 1;
-   if (cc < 1) return;
-   int offset0 = s.index_chars_to_bytes(cc - 1);
-   int offset1 = s.index_chars_to_bytes(cc);
-   int offset2 = s.index_chars_to_bytes(cc + 1);
+   if (cc > s.len()) cc = s.len();
+   if (cc < 2) return;
+   int offset0 = s.index_chars_to_bytes(cc - 2);
+   int offset1 = s.index_chars_to_bytes(cc - 1);
+   int offset2 = s.index_chars_to_bytes(cc);
    if (offset1 - offset0 == 1 && offset2 - offset1 == 1) {
       auto t = s1[offset0];
       s1[offset0] = s1[offset1];
