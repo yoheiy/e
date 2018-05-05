@@ -195,6 +195,7 @@ public:
    void keyword_toggle();
    void show_rot13();
    void join();
+   void transpose_lines();
    void new_line();
    void insert_new_line();
    void char_insert(char c);
@@ -572,6 +573,7 @@ void
 View::join()
 {
    int line = window_offset_ + cursor_row_;
+   if (line < 0 || line + 1 >= buf_->num_of_lines()) return;
    const char *s0 = buf_->get_line(line);
    const char *s1 = buf_->get_line(line + 1);
 
@@ -587,6 +589,18 @@ View::join()
    free((void *)s0);
    buf_->replace_line(line, s);
    buf_->delete_line(line + 1);
+}
+
+void
+View::transpose_lines()
+{
+   int line = window_offset_ + cursor_row_;
+   if (line < 0 || line + 1 >= buf_->num_of_lines()) return;
+   const char *s0 = buf_->get_line(line);
+   const char *s1 = buf_->get_line(line + 1);
+
+   buf_->replace_line(line,     s1);
+   buf_->replace_line(line + 1, s0);
 }
 
 void
@@ -751,6 +765,7 @@ App::mainloop()
       case '<': v.window_top();     break;
       case '>': v.window_bottom();  break;
       case 'j': v.join(); break;
+      case 't': v.transpose_lines(); break;
       case 'f': v.cursor_move_word_next();  break;
       case 'b': v.cursor_move_word_prev();  break;
       case 'h': v.cursor_move_row_abs(0); break;
