@@ -25,6 +25,7 @@ public:
    int index_chars_to_bytes(int n);
    int index_bytes_to_chars(int n);
    int search_word(std::vector<const char *> &ws, int pos);
+   const char *match_word(std::vector<const char *> &ws, int pos);
 private:
    const char *s_;
    static int char_size(const char *c);
@@ -117,6 +118,26 @@ Str::search_word(std::vector<const char *> &ws, int pos=0)
          if (strcmp(s0, w) == 0)
             return index_bytes_to_chars(s0 - s1);
    return -1;
+}
+
+const char *
+Str::match_word(std::vector<const char *> &ws, int pos=0)
+{
+   const char *s = s_;
+
+   if (pos) {
+      int d = index_chars_to_bytes(pos);
+      if (d > size()) return nullptr;
+      s += d; }
+
+   const char *j;
+   for (j = s; *j && isalpha(*j); j++) ;
+
+   for (auto w : ws)
+      if (my_strncmp(s, w, j - s) == 0)
+         return w;
+
+   return nullptr;
 }
 
 class Buf {
@@ -360,31 +381,20 @@ show_ruler(int padding, int col)
 void
 keyword_hilit(int n, const char *s)
 {
-   const char *s0 = nullptr;
-   const char *s1 = s;
-   bool found = false;
+   Str str { s };
+   int pos_start = 0;
 
-   for (auto i = s; *i; i++) {
-      if (!s0 && isalpha(*i)) s0 = i;
-      if (s0 && !isalpha(*i)) {
-         for (auto k : keywords) {
-            if (my_strncmp(s0, k, i - s0) == 0) {
-               if (!found) { lnum_padding_out(n); found = true; }
-               Str s { s1 };
-               lnum_padding_out(s.index_bytes_to_chars(s0 - s1));
-               keyword_hilit_uline(i - s0);
-               s1 = i;
-               break; } }
-         s0 = nullptr; } }
-   if (s0)
-      for (auto k : keywords)
-         if (strcmp(s0, k) == 0) {
-            if (!found) { lnum_padding_out(n); found = true; }
-            Str s { s1 };
-            lnum_padding_out(s.index_bytes_to_chars(s0 - s1));
-            keyword_hilit_uline(strlen(s0));
-            break; }
-   if (found) eol_out();
+   for (;;) {
+      int pos_found = str.search_word(keywords, pos_start);
+      if (pos_found == -1) break;
+      if (pos_start == 0) lnum_padding_out(n);
+      lnum_padding_out(pos_found - pos_start);
+      auto w = str.match_word(keywords, pos_found);
+      if (!w) break;
+      int len = Str(w).len();
+      keyword_hilit_uline(len);
+      pos_start = pos_found + len; }
+   if (pos_start) eol_out();
 }
 
 void
