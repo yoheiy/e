@@ -24,6 +24,7 @@ public:
    int size() { return strlen(s_); } // bytes
    int index_chars_to_bytes(int n);
    int index_bytes_to_chars(int n);
+   int search_word(std::vector<const char *> &ws, int pos);
 private:
    const char *s_;
    static int char_size(const char *c);
@@ -83,6 +84,39 @@ Str::index_bytes_to_chars(int n)
    for (; n; i++, n--)
       if ((*i & 0xc0) != 0x80) l++;
    return l;
+}
+
+int
+my_strncmp(const char *s0, const char *s1, int n)
+{
+   int r = strncmp(s0, s1, n);
+   return r ?: s1[n];
+}
+
+int
+Str::search_word(std::vector<const char *> &ws, int pos=0)
+{
+   const char *s0 = nullptr; // word
+   const char *s1 = s_;      // BOL
+   const char *s2 = s1;      // search starting pos
+
+   if (pos) {
+      int d = index_chars_to_bytes(pos);
+      if (d > size()) return -1;
+      s2 += d; }
+
+   for (auto j = s2; *j; j++) {
+      if (!s0 && isalpha(*j)) s0 = j;
+      if (s0 && !isalpha(*j)) {
+         for (auto w : ws)
+            if (my_strncmp(s0, w, j - s0) == 0)
+               return index_bytes_to_chars(s0 - s1);
+         s0 = nullptr; } }
+   if (s0)
+      for (auto w : ws)
+         if (strcmp(s0, w) == 0)
+            return index_bytes_to_chars(s0 - s1);
+   return -1;
 }
 
 class Buf {
@@ -323,13 +357,6 @@ show_ruler(int padding, int col)
    std::cout << '*' << std::endl;
 }
 
-int
-my_strncmp(const char *s0, const char *s1, int n)
-{
-   int r = strncmp(s0, s1, n);
-   return r ?: s1[n];
-}
-
 void
 keyword_hilit(int n, const char *s)
 {
@@ -465,39 +492,16 @@ View::keyword_search_next()
    const int to   = window_offset_ + window_height_;
    buf_->show(v, from, to);
 
-   int ci, cj;
    for (int i = 0; i < to - from; i++)
    {
-      const char *s0 = nullptr;
-      const char *s1 = v[i]; // BOL
-      const char *s2 = s1;   // search starting pos
-      Str s { s1 };
+      Str s { v[i] };
+      int d = i ? 0 : cursor_column_ + 1;
+      auto found = s.search_word(keywords, d);
+      if (found == -1) continue;
 
-      if (!i) { // line where cursor points to
-         int d = cursor_column_ + 1;
-         if (d > s.len()) continue;
-         s2 += s.index_chars_to_bytes(d); }
-
-      for (auto j = s2; *j; j++) {
-         if (!s0 && isalpha(*j)) s0 = j;
-         if (s0 && !isalpha(*j)) {
-            for (auto k : keywords) {
-               if (my_strncmp(s0, k, j - s0) == 0) {
-                  ci = i;
-                  cj = s.index_bytes_to_chars(s0 - s1);
-                  goto found; } }
-            s0 = nullptr; } }
-      if (s0)
-         for (auto k : keywords)
-            if (strcmp(s0, k) == 0) {
-               ci = i;
-               cj = s.index_bytes_to_chars(s0 - s1);
-               goto found; }
-   }
-   return;
-found:
-   cursor_row_    += ci;
-   cursor_column_  = cj;
+      cursor_row_    += i;
+      cursor_column_  = found;
+      return; }
 }
 
 void
