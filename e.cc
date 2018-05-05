@@ -405,6 +405,12 @@ View::show()
       if (i == cursor_line) {
          eol_out(); }
       eol_out(); }
+
+   std::cout << "[keywords";
+   for (auto i : keywords)
+      std::cout << ' ' << i;
+   std::cout << ']';
+   eol_out();
 }
 
 void
