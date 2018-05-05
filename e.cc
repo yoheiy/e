@@ -191,6 +191,7 @@ public:
    void keyword_search_next();
    void keyword_search_prev() { }
    void keyword_toggle();
+   void show_rot13();
    void join();
    void new_line();
    void insert_new_line();
@@ -415,6 +416,22 @@ show_keywords()
 }
 
 void
+View::show_rot13()
+{
+   const int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >= buf_->num_of_lines()) return;
+
+   const char *s { buf_->get_line(line) };
+   std::cout << "r13 ";
+   for (auto i = s; *i; i++) {
+      auto c = *i;
+      if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M')) c += 13; else
+      if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z')) c -= 13;
+      std::cout << c; }
+   eol_out();
+}
+
+void
 View::show()
 {
    std::vector<const char *> v;
@@ -459,6 +476,7 @@ View::show()
       eol_out(); }
 
    show_keywords();
+   show_rot13();
 }
 
 void
