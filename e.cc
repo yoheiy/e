@@ -377,9 +377,7 @@ View::show()
 
    for (int i = from; i < to && i < 0; i++) {
       lnum_padding_out(lnum_col_max - lnum_col(i));
-      std::cout << i << '#';
-      if (i == cursor_line) {
-         eol_out(); }
+      std::cout << i << (i == cursor_line ? '>' : '#');
       eol_out(); }
 
    int n = (from < 0) ? 0 : from;
@@ -401,9 +399,7 @@ View::show()
 
    for (int i = n; i < to; i++) {
       lnum_padding_out(lnum_col_max - lnum_col(i));
-      std::cout << i << '#';
-      if (i == cursor_line) {
-         eol_out(); }
+      std::cout << i << (i == cursor_line ? '>' : '#');
       eol_out(); }
 
    std::cout << "[keywords";
