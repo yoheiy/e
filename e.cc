@@ -144,7 +144,8 @@ class Buf {
 public:
    Buf(const char *filename);
    void save();
-   bool dirty() { return dirty_; }
+   bool dirty()    { return dirty_; }
+   bool new_file() { return new_file_; }
    void show(std::vector<const char *> &v, int from, int to);
 
    void delete_line(int n);
@@ -159,6 +160,7 @@ private:
    const char *filename_;
    std::vector<const char *> lines;
    bool dirty_;
+   bool new_file_;
 };
 
 class View {
@@ -232,12 +234,14 @@ chop(char *s)
    return c;
 }
 
-Buf::Buf(const char *filename) : dirty_(false)
+Buf::Buf(const char *filename) : dirty_(false), new_file_(false)
 {
    filename_ = strdup(filename);
 
    FILE *f = fopen(filename, "r");
-   if (!f) return;
+   if (!f) {
+      new_file_ = true;
+      return; }
 
    char b[160];
    while (fgets(b, sizeof b, f)) {
@@ -255,7 +259,7 @@ Buf::save()
       fputs(i,    f);
       fputc('\n', f); }
    if (fclose(f) == EOF) return;
-   dirty_ = false;
+   dirty_ = new_file_ = false;
 }
 
 void
@@ -442,7 +446,7 @@ View::show()
    buf_->show(v, from, to);
 
    std::cout << "== " << buf_->filename() <<
-                (buf_->dirty() ? " *" : "") <<
+                (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
                 " [" << from << ":" << to << "] ==";
    eol_out();
 
