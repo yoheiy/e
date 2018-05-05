@@ -359,6 +359,23 @@ keyword_hilit(int n, const char *s)
 }
 
 void
+show_keywords()
+{
+   const char k[] = "[keywords";
+   int n = strlen(k);
+   std::cout << k;
+   for (auto i : keywords) {
+      int d = strlen(i) + 1;
+      if (n + d > 80) {
+         n = 0;
+         eol_out(); }
+      n += d;
+      std::cout << ' ' << i; }
+   std::cout << ']';
+   eol_out();
+}
+
+void
 View::show()
 {
    std::vector<const char *> v;
@@ -402,11 +419,7 @@ View::show()
       std::cout << i << (i == cursor_line ? '>' : '#');
       eol_out(); }
 
-   std::cout << "[keywords";
-   for (auto i : keywords)
-      std::cout << ' ' << i;
-   std::cout << ']';
-   eol_out();
+   show_keywords();
 }
 
 void
