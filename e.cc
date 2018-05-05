@@ -469,36 +469,35 @@ View::keyword_search_next()
    for (int i = 0; i < to - from; i++)
    {
       const char *s0 = nullptr;
-      const char *s1 = v[i];
+      const char *s1 = v[i]; // BOL
+      const char *s2 = s1;   // search starting pos
       Str s { s1 };
 
       if (!i) { // line where cursor points to
-         int d = s.index_chars_to_bytes(cursor_column_ + 1);
-         s1 += d;
-         if (d > s.len()) return; }
+         int d = cursor_column_ + 1;
+         if (d > s.len()) continue;
+         s2 += s.index_chars_to_bytes(d); }
 
-      for (auto j = s1; *j; j++) {
+      for (auto j = s2; *j; j++) {
          if (!s0 && isalpha(*j)) s0 = j;
          if (s0 && !isalpha(*j)) {
             for (auto k : keywords) {
                if (my_strncmp(s0, k, j - s0) == 0) {
-                  Str s { s1 };
                   ci = i;
-                  cj = s.index_bytes_to_chars(s0 - v[i]);
+                  cj = s.index_bytes_to_chars(s0 - s1);
                   goto found; } }
             s0 = nullptr; } }
       if (s0)
          for (auto k : keywords)
             if (strcmp(s0, k) == 0) {
-               Str s { s1 };
                ci = i;
-               cj = s.index_bytes_to_chars(s0 - v[i]);
+               cj = s.index_bytes_to_chars(s0 - s1);
                goto found; }
    }
    return;
 found:
-   cursor_row_ += ci;
-   cursor_column_ = cj;
+   cursor_row_    += ci;
+   cursor_column_  = cj;
 }
 
 void
