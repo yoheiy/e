@@ -765,7 +765,8 @@ App::mainloop()
       case '<': v.window_top();     break;
       case '>': v.window_bottom();  break;
       case 'j': v.join(); break;
-      case 't': v.transpose_lines(); break;
+      case 't': v.transpose_lines(); v.cursor_move_row_rel(+1); break;
+      case 'T': v.cursor_move_row_rel(-1); v.transpose_lines(); break;
       case 'f': v.cursor_move_word_next();  break;
       case 'b': v.cursor_move_word_prev();  break;
       case 'h': v.cursor_move_row_abs(0); break;
