@@ -674,6 +674,7 @@ View::exdent()
    for (int line2 = line - 1; ; line2--) {
       if (line2 < 0) return;
       const char *s1 = buf_->get_line(line2);
+      if (!*s1) continue;
       n1 = count_indent(s1);
       if (n0 > n1) break; }
    const char *s = copy_indent(n1, &s0[n0]);
