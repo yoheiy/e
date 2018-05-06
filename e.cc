@@ -210,6 +210,7 @@ public:
    void keyword_toggle();
    void show_rot13();
    void join();
+   void duplicate_line();
    void transpose_lines();
    void transpose_chars();
    void new_line();
@@ -644,6 +645,20 @@ View::join()
 }
 
 void
+View::duplicate_line()
+{
+   int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >= buf_->num_of_lines()) return;
+   const char *s0 = buf_->get_line(line);
+   const char *s1 = strdup(s0);
+   if (!s1) return;
+   buf_->insert_empty_line(line);
+   const char *s2 = buf_->get_line(line);
+   buf_->replace_line(line, s1);
+   free((void *)s2);
+}
+
+void
 View::transpose_lines()
 {
    int line = window_offset_ + cursor_row_;
@@ -846,6 +861,7 @@ App::mainloop()
       case '<': v.window_top();     break;
       case '>': v.window_bottom();  break;
       case 'j': v.join(); break;
+      case 'd': v.duplicate_line(); break;
       case 't': v.transpose_lines(); v.cursor_move_row_rel(+1); break;
       case 'T': v.cursor_move_row_rel(-1); v.transpose_lines(); break;
       case 'f': v.cursor_move_word_next();  break;
