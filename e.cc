@@ -6,6 +6,10 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#define COLOUR_ESC "\033"
+#define COLOUR_GREY    COLOUR_ESC "[38;5;248m"
+#define COLOUR_NORMAL  COLOUR_ESC "[0m"
+#define COLOUR_GREY_BG COLOUR_ESC "[48;5;248m"
 
 extern "C" {
    int tc_init();
@@ -373,11 +377,13 @@ keyword_hilit_uline(int n)
 void
 show_ruler(int padding, int col)
 {
+   std::cout << COLOUR_GREY;
    tc("ce");
    lnum_padding_out(padding);
    for (int i = 1; i < 10; i++)
       printf("0    %3o", i);
    std::cout << '0';
+   std::cout << COLOUR_NORMAL;
 
    tc("cr");
    for (int i = 0; i < padding + col; i++)
@@ -447,22 +453,27 @@ View::show()
 
    buf_->show(v, from, to);
 
+   std::cout << COLOUR_GREY_BG;
    std::cout << "== " << buf_->filename() <<
                 (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
                 " [" << from << ":" << to << "] ==";
    eol_out();
+   std::cout << COLOUR_NORMAL;
 
    show_ruler(lnum_col_max + 2, cursor_column_);
 
+   std::cout << COLOUR_GREY;
    for (int i = from; i < to && i < 0; i++) {
       lnum_padding_out(lnum_col_max - lnum_col(i));
       std::cout << i << (i == cursor_line ? '>' : '#');
       eol_out(); }
+   std::cout << COLOUR_NORMAL;
 
    int n = (from < 0) ? 0 : from;
    for (auto i : v) {
       lnum_padding_out(lnum_col_max - lnum_col(n));
-      std::cout << n << ": " << i;
+      std::cout << COLOUR_GREY << n << ": " << COLOUR_NORMAL;
+      std::cout << i;
       eol_out();
 
       keyword_hilit(lnum_col_max + 2, i);
@@ -471,11 +482,17 @@ View::show()
          int m = min(cursor_column_, buf_->line_length(n));
          int c = Str(i)[m];
          lnum_padding_out(lnum_col_max + 2 + m);
-         std::cout << '^' << m;
+         std::cout << COLOUR_GREY_BG;
+         std::cout << '^';
+         std::cout << COLOUR_NORMAL;
+         std::cout << COLOUR_GREY;
+         std::cout << m;
          std::cout << '#' << std::hex << c << std::dec;
+         std::cout << COLOUR_NORMAL;
          eol_out(); }
       ++n; }
 
+   std::cout << COLOUR_GREY;
    for (int i = n; i < to; i++) {
       lnum_padding_out(lnum_col_max - lnum_col(i));
       std::cout << i << (i == cursor_line ? '>' : '#');
@@ -483,6 +500,7 @@ View::show()
 
    show_keywords();
    show_rot13();
+   std::cout << COLOUR_NORMAL;
 }
 
 void
