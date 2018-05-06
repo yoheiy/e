@@ -209,6 +209,8 @@ public:
    void keyword_search_prev() { }
    void keyword_toggle();
    void show_rot13();
+   void indent();
+   void exdent();
    void join();
    void duplicate_line();
    void transpose_lines();
@@ -622,6 +624,41 @@ View::keyword_toggle()
       keywords.erase(i); }
 }
 
+int
+count_indent(const char *s)
+{
+   int i;
+   for (i = 0; s[i] == ' '; i++) ;
+   return i;
+}
+
+void
+View::indent()
+{
+   int line = window_offset_ + cursor_row_;
+   if (line < 1 || line >= buf_->num_of_lines()) return;
+   const char *s0 = buf_->get_line(line);
+   const char *s1 = buf_->get_line(line - 1);
+   int n0 = count_indent(s0);
+   int n1 = count_indent(s1);
+   if (n0 == n1) return;
+
+   int len = strlen(&s0[n0]);
+   char *s = (char *)malloc(n1 + len + 1);
+   if (!s) return;
+   memset(s, ' ', n1);
+   strcpy(&s[n1], &s0[n0]);
+   free((void *)s0);
+   buf_->replace_line(line, s);
+
+   cursor_column_ = n1;
+}
+
+void
+View::exdent()
+{
+}
+
 void
 View::join()
 {
@@ -889,6 +926,8 @@ App::mainloop()
       case 'A': v.cursor_move_char_abs(0);  break;
       case 'E': v.cursor_move_char_end();   break;
       case 'L': v.window_centre_cursor();   break;
+      case 'I': v.indent(); break;
+      case 'O': v.exdent(); break;
       case 'J': v.insert_new_line(); break;
       case 'T': v.transpose_chars(); break;
       case 'V': v.page_down(); break;
