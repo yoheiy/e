@@ -424,6 +424,7 @@ keyword_hilit_colour(const char *s, int col)
       pos_start = pos_found + len; }
    if (col >= 0 && col < len)
       buf[col] = '^';
+
    for (int i = 0; i < len; i++) {
       if ((!i || buf[i - 1] != '~') && buf[i] == '~')
          std::cout << COLOUR_RED;
@@ -434,6 +435,14 @@ keyword_hilit_colour(const char *s, int col)
       str.output_char(i);
       if (buf[i] == '^')
          std::cout << COLOUR_NORMAL; }
+
+   // EOL
+   std::cout << COLOUR_NORMAL;
+   if (col == len)
+      std::cout << COLOUR_GREY_BG;
+   else
+      std::cout << COLOUR_GREY;
+   std::cout << '$' << COLOUR_NORMAL;
 }
 
 void
