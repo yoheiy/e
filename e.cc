@@ -632,6 +632,17 @@ count_indent(const char *s)
    return i;
 }
 
+const char *
+copy_indent(int n, const char *s0)
+{
+   int len = strlen(s0);
+   char *s = (char *)malloc(n + len + 1);
+   if (!s) return s;
+   memset(s, ' ', n);
+   strcpy(&s[n], s0);
+   return s;
+}
+
 void
 View::indent()
 {
@@ -643,11 +654,8 @@ View::indent()
    int n1 = count_indent(s1);
    if (n0 == n1) return;
 
-   int len = strlen(&s0[n0]);
-   char *s = (char *)malloc(n1 + len + 1);
+   const char *s = copy_indent(n1, &s0[n0]);
    if (!s) return;
-   memset(s, ' ', n1);
-   strcpy(&s[n1], &s0[n0]);
    free((void *)s0);
    buf_->replace_line(line, s);
 
@@ -657,6 +665,23 @@ View::indent()
 void
 View::exdent()
 {
+   int line = window_offset_ + cursor_row_;
+   if (line < 1 || line >= buf_->num_of_lines()) return;
+   const char *s0 = buf_->get_line(line);
+   int n0 = count_indent(s0);
+   if (!n0) return;
+   int n1;
+   for (int line2 = line - 1; ; line2--) {
+      if (line2 < 0) return;
+      const char *s1 = buf_->get_line(line2);
+      n1 = count_indent(s1);
+      if (n0 > n1) break; }
+   const char *s = copy_indent(n1, &s0[n0]);
+   if (!s) return;
+   free((void *)s0);
+   buf_->replace_line(line, s);
+
+   cursor_column_ = n1;
 }
 
 void
