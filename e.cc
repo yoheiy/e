@@ -7,6 +7,7 @@
 #include <iostream>
 #include <algorithm>
 #define COLOUR_ESC "\033"
+#define COLOUR_RED     COLOUR_ESC "[31m"
 #define COLOUR_GREY    COLOUR_ESC "[38;5;248m"
 #define COLOUR_NORMAL  COLOUR_ESC "[0m"
 #define COLOUR_GREY_BG COLOUR_ESC "[48;5;248m"
@@ -30,6 +31,7 @@ public:
    int index_bytes_to_chars(int n);
    int search_word(std::vector<const char *> &ws, int pos);
    const char *match_word(std::vector<const char *> &ws, int pos);
+   void output_char(int n);
 private:
    const char *s_;
    static int char_size(const char *c);
@@ -142,6 +144,15 @@ Str::match_word(std::vector<const char *> &ws, int pos=0)
          return w;
 
    return nullptr;
+}
+
+void
+Str::output_char(int n)
+{
+   int x = index_chars_to_bytes(n);
+   int l = char_size(&s_[x]) ?: 1;
+   for (int i = 0; i < l; i++)
+      std::cout << s_[x + i];
 }
 
 class Buf {
@@ -392,22 +403,37 @@ show_ruler(int padding, int col)
 }
 
 void
-keyword_hilit(int n, const char *s)
+keyword_hilit_colour(const char *s, int col)
 {
    Str str { s };
    int pos_start = 0;
+   int len = str.len();
+   char *buf = (char *)malloc(str.len());
+   if (!buf) {
+      std::cout << s;
+      return; }
+   memset(buf, ' ', len);
 
    for (;;) {
       int pos_found = str.search_word(keywords, pos_start);
       if (pos_found == -1) break;
-      if (pos_start == 0) lnum_padding_out(n);
-      lnum_padding_out(pos_found - pos_start);
       auto w = str.match_word(keywords, pos_found);
-      if (!w) break;
+      if (!w) { pos_start++; continue; }
       int len = Str(w).len();
-      keyword_hilit_uline(len);
+      memset(&buf[pos_found], '~', len);
       pos_start = pos_found + len; }
-   if (pos_start) eol_out();
+   if (col >= 0 && col < len)
+      buf[col] = '^';
+   for (int i = 0; i < len; i++) {
+      if ((!i || buf[i - 1] != '~') && buf[i] == '~')
+         std::cout << COLOUR_RED;
+      if (i && buf[i - 1] == '~' && buf[i] != '~')
+         std::cout << COLOUR_NORMAL;
+      if (buf[i] == '^')
+         std::cout << COLOUR_GREY_BG;
+      str.output_char(i);
+      if (buf[i] == '^')
+         std::cout << COLOUR_NORMAL; }
 }
 
 void
@@ -473,10 +499,8 @@ View::show()
    for (auto i : v) {
       lnum_padding_out(lnum_col_max - lnum_col(n));
       std::cout << COLOUR_GREY << n << ": " << COLOUR_NORMAL;
-      std::cout << i;
+      keyword_hilit_colour(i, n == cursor_line ? cursor_column_ : -1);
       eol_out();
-
-      keyword_hilit(lnum_col_max + 2, i);
 
       if (n == cursor_line) {
          int m = min(cursor_column_, buf_->line_length(n));
