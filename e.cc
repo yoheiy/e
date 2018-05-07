@@ -1,6 +1,8 @@
 #include <termios.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
+#include <libgen.h>
 #include <cstring>
 #include <cstdio>
 #include <vector>
@@ -238,6 +240,7 @@ private:
    void mainloop();
 
    const char *filename_;
+   int line_;
 };
 
 char
@@ -908,6 +911,8 @@ App::mainloop()
    char cmd = '\0', prev_cmd;
    int  wh = 20;
 
+   v.cursor_move_row_abs(line_);
+   if (line_) v.window_centre_cursor();
    tc("cl");
    v.set_window_height(wh);
    v.show();
@@ -999,7 +1004,24 @@ out:
 
 App::App(char **a)
 {
-   filename_ = a[1] ?: "e.txt";
+   line_ = 0;
+   const char *f0 = a[1];
+   if (!f0) { filename_ = "e.txt"; return; }
+   filename_ = f0;
+   char *f1 = strdup(f0);
+   if (!f1) return;
+   const char *f2 = dirname(f1);
+   struct stat buf;
+   if (stat(f2, &buf) == 0 && S_ISDIR(buf.st_mode)) { free(f1); return; }
+   char *f3 = strdup(f2);
+   free(f1);
+   if (!f3) return;
+   f1 = strdup(f0);
+   if (!f1) { free(f3); return; }
+   f2 = basename(f1);
+   line_ = atoi(f2);
+   free(f1);
+   filename_ = f3;
 }
 
 } // namespace

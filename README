@@ -1,1 +1,12 @@
 Lightweight Text Editor
+
+usage
+
+$ e /path/to/file
+open file
+
+$ e /path/to/file/line
+open file and go to line
+
+$ e
+open default file "e.txt"
