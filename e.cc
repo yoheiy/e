@@ -655,6 +655,9 @@ View::indent()
    const char *s1 = buf_->get_line(line - 1);
    int n0 = count_indent(s0);
    int n1 = count_indent(s1);
+   if (!s1[n1] && line >= 2) {
+      s1 = buf_->get_line(line - 2);
+      n1 = count_indent(s1); }
    if (n0 == n1) return;
 
    const char *s = copy_indent(n1, &s0[n0]);
