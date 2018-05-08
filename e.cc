@@ -218,7 +218,7 @@ public:
    void transpose_lines();
    void transpose_chars();
    void new_line();
-   void insert_new_line();
+   void insert_new_line(bool);
    void char_insert(char c);
    void char_delete_forward();
    void char_delete_backward();
@@ -775,7 +775,7 @@ View::new_line()
 }
 
 void
-View::insert_new_line()
+View::insert_new_line(bool left=true)
 {
    int line = window_offset_ + cursor_row_;
    if (line < 0 || line >=buf_->num_of_lines()) return;
@@ -792,8 +792,9 @@ View::insert_new_line()
    t = strdup(s0);
 
    free((void *)s0);
-   cursor_row_++;
-   cursor_column_ = 0;
+   if (left) {
+      cursor_row_++;
+      cursor_column_ = 0; }
    buf_->insert_empty_line(line);
    buf_->replace_line(line++, t);
    buf_->replace_line(line,   b);
@@ -963,6 +964,7 @@ App::mainloop()
       case 'I': v.indent(); break;
       case 'O': v.exdent(); break;
       case 'J': v.insert_new_line(); break;
+      case 'Y': v.insert_new_line(false); break;
       case 'T': v.transpose_chars(); break;
       case 'V': v.page_down(); break;
       case 'X': tc("cl"); return;
