@@ -646,6 +646,19 @@ copy_indent(int n, const char *s0)
    return s;
 }
 
+int
+parent_indent(Buf *b, int line, int n0)
+{
+   int n1;
+   for (int line2 = line - 1; ; line2--) {
+      if (line2 < 0) return -1;
+      const char *s1 = b->get_line(line2);
+      n1 = count_indent(s1);
+      if (!s1[n1]) continue;
+      if (n0 > n1) break; }
+   return n1;
+}
+
 void
 View::indent()
 {
@@ -658,7 +671,10 @@ View::indent()
    if (!s1[n1] && line >= 2) {
       s1 = buf_->get_line(line - 2);
       n1 = count_indent(s1); }
-   if (n0 == n1) return;
+   if (n0 == n1) {
+      n1 = parent_indent(buf_, line, n0);
+      if (n1 < 0) return;
+      n1 = n0 + n0 - n1; }
 
    const char *s = copy_indent(n1, &s0[n0]);
    if (!s) return;
@@ -676,13 +692,8 @@ View::exdent()
    const char *s0 = buf_->get_line(line);
    int n0 = count_indent(s0);
    if (!n0) return;
-   int n1;
-   for (int line2 = line - 1; ; line2--) {
-      if (line2 < 0) return;
-      const char *s1 = buf_->get_line(line2);
-      n1 = count_indent(s1);
-      if (!s1[n1]) continue;
-      if (n0 > n1) break; }
+   int n1 = parent_indent(buf_, line, n0);
+   if (n1 < 0) return;
    const char *s = copy_indent(n1, &s0[n0]);
    if (!s) return;
    free((void *)s0);
