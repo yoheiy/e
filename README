@@ -1,12 +1,42 @@
-Lightweight Text Editor
+OPEN
+$ e        open e.txt
+$ e FILE   open FILE
+$ e FILE/N open FILE and go to line N
 
-usage
+SAVE AND EXIT
+^x         exit
+m-s        save
 
-$ e /path/to/file
-open file
+CURSOR MOVE
+^n  / ^p   next / prev line
+^f  / ^b   next / prev char
+m-f / m-b  next / prev word
+m-a / m-e  head / tail of the line
+m-h / m-l  top / bottom of current window
 
-$ e /path/to/file/line
-open file and go to line
+WINDOW MOVE
+^l         move current line to the centre of the window
+^v  / m-v  next / prev page
+m-< / m->  document head / tail
+m-+ / m--  inc / dec window height
 
-$ e
-open default file "e.txt"
+EDIT
+^d  / ^h   delete char forwards / backwards
+^k  / ^u   delete to end / beginning of the line
+^j  / ^y   insert newline before / after cursor
+^i  / ^o   indent / exdent
+^t         transpose chars before cursor
+m-t / m-T  move line down / up
+m-j        join
+m-d        duplicate
+
+VIEW
+m-k        toggle keyword
+m-n / m-p  search keyword next / prev
+
+BUGS
+search keyword prev doesn't work
+
+INSTALL
+$ make && sudo cp e /usr/local/bin
+it needs termcap library
