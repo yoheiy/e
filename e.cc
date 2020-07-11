@@ -585,6 +585,7 @@ View::keyword_search_next()
 
    for (int i = 0; i < to - from; i++)
    {
+      if (i == v.size()) return;
       Str s { v[i] };
       int d = i ? 0 : cursor_column_ + 1;
       auto found = s.search_word(keywords, d);
