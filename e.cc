@@ -224,7 +224,7 @@ public:
    void char_delete_backward();
    void char_delete_to_eol();
    void char_delete_to_bol();
-private:
+protected:
    Buf *buf_;
    int  window_offset_;
    int  window_height_;
@@ -918,12 +918,180 @@ View::char_delete_to_bol()
    buf_->replace_line(line, s1);
 }
 
+class TableView : public View {
+public:
+   TableView(Buf *b) : View(b) { }
+   void show();
+   void cursor_move_row_rel(int n);
+   void cursor_move_word_next();
+   void cursor_move_word_prev();
+};
+
+void
+TableView::cursor_move_word_next()
+{
+   const int row_prev = cursor_row_ + window_offset_;
+   if (row_prev < 0 || row_prev >= buf_->num_of_lines()) return;
+   Str s { buf_->get_line(row_prev) };
+   if (cursor_column_ > s.len()) return;
+
+   for (int i = cursor_column_ + 1; i < s.len(); i++)
+      if (s[i] == ':') {
+         cursor_column_ = i + 1;
+         break; }
+}
+
+void
+TableView::cursor_move_word_prev()
+{
+}
+
+void
+TableView::cursor_move_row_rel(int n)
+{
+   const int row_prev = cursor_row_ + window_offset_;
+   const int col_prev = cursor_column_;
+
+   cursor_row_ += n;
+   cursor_column_ = 0;
+
+   const int row_next = cursor_row_ + window_offset_;
+
+   if (row_prev < 0 || row_prev >= buf_->num_of_lines()) return;
+   int c = 0;
+   const char *s { buf_->get_line(row_prev) };
+   for (int i = 0; i <= col_prev; i++)
+      if (s[i] == ':') c++;
+
+   if (row_next < 0 || row_next >= buf_->num_of_lines()) return;
+   int c2 = 0;
+   const char *t { buf_->get_line(row_next) };
+   for (int i = 0; i < strlen(t); i++)
+      if (t[i] == ':' && ++c2 == c) {
+         Str s { t };
+         cursor_column_ = s.index_bytes_to_chars(i) + 1;
+         break; }
+}
+
+void
+tableview_keyword_hilit_colour(const char *s, int col)
+{
+   Str str { s };
+   int pos_start = 0;
+   int len = str.len();
+   char *buf = (char *)malloc(str.len());
+   if (!buf) {
+      std::cout << s;
+      return; }
+   memset(buf, ' ', len);
+
+   for (;;) {
+      int pos_found = str.search_word(keywords, pos_start);
+      if (pos_found == -1) break;
+      auto w = str.match_word(keywords, pos_found);
+      if (!w) { pos_start++; continue; }
+      int len = Str(w).len();
+      memset(&buf[pos_found], '~', len);
+      pos_start = pos_found + len; }
+   if (col >= 0 && col < len)
+      buf[col] = '^';
+
+   int cell_col = 0;
+   for (int i = 0; i < len; i++) {
+      if (str[i] == ':') {
+         for (int i = cell_col; i < 16; i++)
+            std::cout << ' ';
+         cell_col = 0; }
+
+      if ((!i || buf[i - 1] != '~') && buf[i] == '~')
+         std::cout << COLOUR_RED;
+      if (i && buf[i - 1] == '~' && buf[i] != '~')
+         std::cout << COLOUR_NORMAL;
+      if (buf[i] == '^')
+         std::cout << COLOUR_GREY_BG;
+      str.output_char(i);
+      if (buf[i] == '^')
+         std::cout << COLOUR_NORMAL;
+      cell_col++; }
+
+   // EOL
+   std::cout << COLOUR_NORMAL;
+   if (col == len)
+      std::cout << COLOUR_GREY_BG;
+   else
+      std::cout << COLOUR_GREY;
+   std::cout << '$' << COLOUR_NORMAL;
+}
+
+void
+TableView::show()
+{
+   std::vector<const char *> v;
+   const int from = window_offset_, to = window_offset_ + window_height_;
+   const int cursor_line = window_offset_ + cursor_row_;
+   const int lnum_col_max = max(lnum_col(from), lnum_col(to - 1));
+
+   buf_->show(v, from, to);
+
+   std::cout << COLOUR_GREY_BG;
+   std::cout << "== " << buf_->filename() <<
+                (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
+                " [" << from << ":" << to << "] ==";
+   eol_out();
+   std::cout << COLOUR_NORMAL;
+
+#if 0
+   show_ruler(lnum_col_max + 2, cursor_column_);
+#endif
+
+   std::cout << COLOUR_GREY;
+   for (int i = from; i < to && i < 0; i++) {
+      lnum_padding_out(lnum_col_max - lnum_col(i));
+      std::cout << i << (i == cursor_line ? '>' : '#');
+      eol_out(); }
+   std::cout << COLOUR_NORMAL;
+
+   int n = (from < 0) ? 0 : from;
+   for (auto i : v) {
+      lnum_padding_out(lnum_col_max - lnum_col(n));
+      std::cout << COLOUR_GREY << n << ": " << COLOUR_NORMAL;
+      tableview_keyword_hilit_colour(i, n == cursor_line ? cursor_column_ : -1);
+      eol_out();
+
+#if 0
+      if (n == cursor_line) {
+         int m = min(cursor_column_, buf_->line_length(n));
+         int c = Str(i)[m];
+         lnum_padding_out(lnum_col_max + 2 + m);
+         std::cout << COLOUR_GREY_BG;
+         std::cout << '^';
+         std::cout << COLOUR_NORMAL;
+         std::cout << COLOUR_GREY;
+         std::cout << m;
+         std::cout << '#' << std::hex << c << std::dec;
+         std::cout << COLOUR_NORMAL;
+         eol_out(); }
+#endif
+      ++n; }
+
+   std::cout << COLOUR_GREY;
+   for (int i = n; i < to; i++) {
+      lnum_padding_out(lnum_col_max - lnum_col(i));
+      std::cout << i << (i == cursor_line ? '>' : '#');
+      eol_out(); }
+
+   show_keywords();
+   show_rot13();
+   std::cout << COLOUR_NORMAL;
+}
+
+
 #define ESC '\033'
 void
 App::mainloop()
 {
    Buf  b(filename_);
-   View v(&b);
+   TableView v(&b);
    char cmd = '\0', prev_cmd;
    int  wh = 20;
 
