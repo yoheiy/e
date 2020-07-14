@@ -1064,6 +1064,20 @@ TableView::show()
    show_ruler(lnum_col_max + 2, cursor_column_);
 #endif
 
+   Str s(v[cursor_line]);
+   int cursor_cell = 0;
+   for (int i = 0; i < s.len() && i < cursor_column_; i++)
+      if (s[i] == ':') cursor_cell = i + 1;
+   for (int j = cursor_cell; j < s.len() && s[j] != ':'; j++) {
+      if (j == cursor_column_) std::cout << COLOUR_GREY_BG;
+      s.output_char(j);
+      if (j == cursor_column_) std::cout << COLOUR_NORMAL; }
+   if (s[cursor_column_] == ':')
+      std::cout << COLOUR_GREY_BG << ':' << COLOUR_NORMAL;
+   if (cursor_column_ == s.len())
+      std::cout << COLOUR_GREY_BG << '$' << COLOUR_NORMAL;
+   eol_out();
+
    std::cout << COLOUR_GREY;
    for (int i = from; i < to && i < 0; i++) {
       lnum_padding_out(lnum_col_max - lnum_col(i));
