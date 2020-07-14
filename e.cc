@@ -1044,6 +1044,24 @@ tableview_keyword_hilit_colour(const char *s, int col)
 }
 
 void
+show_content_under_cursor(const char *str, int col)
+{
+   Str s(str);
+   int cursor_cell = 0;
+   for (int i = 0; i < s.len() && i < col; i++)
+      if (s[i] == ':') cursor_cell = i + 1;
+   for (int j = cursor_cell; j < s.len() && s[j] != ':'; j++) {
+      if (j == col) std::cout << COLOUR_GREY_BG;
+      s.output_char(j);
+      if (j == col) std::cout << COLOUR_NORMAL; }
+   if (s[col] == ':')
+      std::cout << COLOUR_GREY_BG << ':' << COLOUR_NORMAL;
+   if (col == s.len())
+      std::cout << COLOUR_GREY_BG << '$' << COLOUR_NORMAL;
+   eol_out();
+}
+
+void
 TableView::show()
 {
    std::vector<const char *> v;
@@ -1060,23 +1078,10 @@ TableView::show()
    eol_out();
    std::cout << COLOUR_NORMAL;
 
-#if 0
-   show_ruler(lnum_col_max + 2, cursor_column_);
-#endif
-
-   Str s(v[cursor_line]);
-   int cursor_cell = 0;
-   for (int i = 0; i < s.len() && i < cursor_column_; i++)
-      if (s[i] == ':') cursor_cell = i + 1;
-   for (int j = cursor_cell; j < s.len() && s[j] != ':'; j++) {
-      if (j == cursor_column_) std::cout << COLOUR_GREY_BG;
-      s.output_char(j);
-      if (j == cursor_column_) std::cout << COLOUR_NORMAL; }
-   if (s[cursor_column_] == ':')
-      std::cout << COLOUR_GREY_BG << ':' << COLOUR_NORMAL;
-   if (cursor_column_ == s.len())
-      std::cout << COLOUR_GREY_BG << '$' << COLOUR_NORMAL;
-   eol_out();
+   if (cursor_line >= 0 && cursor_line < buf_->num_of_lines())
+      show_content_under_cursor(buf_->get_line(cursor_line), cursor_column_);
+   else
+      eol_out();
 
    std::cout << COLOUR_GREY;
    for (int i = from; i < to && i < 0; i++) {
@@ -1091,21 +1096,6 @@ TableView::show()
       std::cout << COLOUR_GREY << n << ": " << COLOUR_NORMAL;
       tableview_keyword_hilit_colour(i, n == cursor_line ? cursor_column_ : -1);
       eol_out();
-
-#if 0
-      if (n == cursor_line) {
-         int m = min(cursor_column_, buf_->line_length(n));
-         int c = Str(i)[m];
-         lnum_padding_out(lnum_col_max + 2 + m);
-         std::cout << COLOUR_GREY_BG;
-         std::cout << '^';
-         std::cout << COLOUR_NORMAL;
-         std::cout << COLOUR_GREY;
-         std::cout << m;
-         std::cout << '#' << std::hex << c << std::dec;
-         std::cout << COLOUR_NORMAL;
-         eol_out(); }
-#endif
       ++n; }
 
    std::cout << COLOUR_GREY;
