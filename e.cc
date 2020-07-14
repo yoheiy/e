@@ -10,6 +10,7 @@
 #include <algorithm>
 #define COLOUR_ESC "\033"
 #define COLOUR_RED     COLOUR_ESC "[31m"
+#define COLOUR_CYAN    COLOUR_ESC "[36m"
 #define COLOUR_GREY    COLOUR_ESC "[38;5;248m"
 #define COLOUR_NORMAL  COLOUR_ESC "[0m"
 #define COLOUR_GREY_BG COLOUR_ESC "[48;5;248m"
@@ -996,12 +997,31 @@ tableview_keyword_hilit_colour(const char *s, int col)
    if (col >= 0 && col < len)
       buf[col] = '^';
 
+   const int cell_width = 16;
    int cell_col = 0;
    for (int i = 0; i < len; i++) {
       if (str[i] == ':') {
-         for (int i = cell_col; i < 16; i++)
+         for (int i = cell_col; i < cell_width; i++)
             std::cout << ' ';
-         cell_col = 0; }
+         if (i == col)
+            std::cout << COLOUR_GREY_BG << ':' << COLOUR_NORMAL;
+         else
+            std::cout << COLOUR_CYAN << '|' << COLOUR_NORMAL;
+         cell_col = 1;
+         continue;
+      }
+      if (cell_col == cell_width - 1 && str[i + 1] != ':') {
+         int found = 0;
+         for (int j = i; j < len && str[j] != ':'; j++)
+            if (j == col) found = 1;
+         if (found) {
+            std::cout << COLOUR_GREY_BG;
+            str.output_char(col);
+            std::cout << COLOUR_NORMAL; }
+         else
+            std::cout << COLOUR_CYAN << '>' << COLOUR_NORMAL;
+         cell_col++; }
+      if (cell_col >= cell_width) continue;
 
       if ((!i || buf[i - 1] != '~') && buf[i] == '~')
          std::cout << COLOUR_RED;
