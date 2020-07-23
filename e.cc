@@ -8,6 +8,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <sys/ioctl.h>
 #define COLOUR_ESC "\033"
 #define COLOUR_RED     COLOUR_ESC "[31m"
 #define COLOUR_CYAN    COLOUR_ESC "[36m"
@@ -192,6 +193,7 @@ public:
    virtual void window_bottom()    { window_offset_ =
          buf_->num_of_lines() - window_height_; }
    virtual void set_window_height(int n) { window_height_ = n; }
+   virtual int  get_window_height() { return window_height_; }
 
    virtual void cursor_move_row_abs(int n)  { cursor_row_     = n; }
    virtual void cursor_move_row_rel(int n)  { cursor_row_    += n; }
@@ -204,6 +206,13 @@ public:
    virtual void cursor_move_word_prev();
 
    virtual void window_centre_cursor() {
+         struct winsize w;
+
+         /* see tty_ioctl(4) */
+         ioctl(STDIN_FILENO, TIOCGWINSZ, &w);
+         window_width_  = w.ws_col;
+         window_height_ = w.ws_row - 6;
+
          int t = window_height_ / 2;
          window_offset_ += cursor_row_ - t;
          cursor_row_ = t; }
@@ -229,6 +238,7 @@ protected:
    Buf *buf_;
    int  window_offset_;
    int  window_height_;
+   int  window_width_;
    int  cursor_row_;
    int  cursor_column_; // chars
 };
@@ -345,10 +355,15 @@ Buf::line_length(int n)
 View::View(Buf * buf) :
    buf_(buf),
    window_offset_(0),
-   window_height_(20),
    cursor_row_(0),
    cursor_column_(0)
 {
+   struct winsize w;
+
+   /* see tty_ioctl(4) */
+   ioctl(STDIN_FILENO, TIOCGWINSZ, &w);
+   window_width_  = w.ws_col;
+   window_height_ = w.ws_row - 6;
 }
 
 int min(int a, int b) { return (a < b) ? a : b; }
@@ -411,7 +426,7 @@ show_ruler(int padding, int col)
 }
 
 void
-keyword_hilit_colour(const char *s, int col)
+keyword_hilit_colour(const char *s, int col, int width)
 {
    Str str { s };
    int pos_start = 0;
@@ -434,6 +449,9 @@ keyword_hilit_colour(const char *s, int col)
       buf[col] = '^';
 
    for (int i = 0; i < len; i++) {
+      if (i == width - 1) {
+         std::cout << COLOUR_RED << '>' << COLOUR_NORMAL;
+         return; }
       if ((!i || buf[i - 1] != '~') && buf[i] == '~')
          std::cout << COLOUR_RED;
       if (i && buf[i - 1] == '~' && buf[i] != '~')
@@ -451,6 +469,10 @@ keyword_hilit_colour(const char *s, int col)
    else
       std::cout << COLOUR_GREY;
    std::cout << '$' << COLOUR_NORMAL;
+   if (len + 1 == width) {
+      std::cout << std::endl;
+      return; }
+   eol_out();
 }
 
 void
@@ -516,8 +538,7 @@ View::show()
    for (auto i : v) {
       lnum_padding_out(lnum_col_max - lnum_col(n));
       std::cout << COLOUR_GREY << n << ": " << COLOUR_NORMAL;
-      keyword_hilit_colour(i, n == cursor_line ? cursor_column_ : -1);
-      eol_out();
+      keyword_hilit_colour(i, n == cursor_line ? cursor_column_ : -1, window_width_ - lnum_col_max - 2);
 
       if (n == cursor_line) {
          int m = min(cursor_column_, buf_->line_length(n));
@@ -1119,12 +1140,10 @@ App::mainloop()
    View &v = *(type_ ? new TableView(&b) : new View(&b));
 
    char cmd = '\0', prev_cmd;
-   int  wh = 20;
 
    v.cursor_move_row_abs(line_);
    if (line_) v.window_centre_cursor();
    tc("cl");
-   v.set_window_height(wh);
    v.show();
 
    while (prev_cmd = cmd, cmd = getchar(), cmd != EOF) {
@@ -1147,8 +1166,8 @@ App::mainloop()
       case 'h': v.cursor_move_row_abs(0); break;
       case 'l': v.cursor_move_row_end();  break;
       case 'v': v.page_up();   break;
-      case '+': wh++; v.set_window_height(wh); break;
-      case '-': wh--; v.set_window_height(wh); break;
+      case '+': v.set_window_height(v.get_window_height() + 1); break;
+      case '-': v.set_window_height(v.get_window_height() - 1); break;
       case 's': b.save(); break;
       case 'k': v.keyword_toggle(); break;
       case 'n': v.keyword_search_next(); break;
