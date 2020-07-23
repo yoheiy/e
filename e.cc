@@ -184,47 +184,47 @@ private:
 class View {
 public:
    View(Buf * buf);
-   void show();
-   void page_down() { window_offset_ += window_height_; }
-   void page_up()   { window_offset_ -= window_height_; }
-   void window_move(int d) { window_offset_ = d; }
-   void window_top()       { window_offset_ = 0; }
-   void window_bottom()    { window_offset_ =
+   virtual void show();
+   virtual void page_down() { window_offset_ += window_height_; }
+   virtual void page_up()   { window_offset_ -= window_height_; }
+   virtual void window_move(int d) { window_offset_ = d; }
+   virtual void window_top()       { window_offset_ = 0; }
+   virtual void window_bottom()    { window_offset_ =
          buf_->num_of_lines() - window_height_; }
-   void set_window_height(int n) { window_height_ = n; }
+   virtual void set_window_height(int n) { window_height_ = n; }
 
-   void cursor_move_row_abs(int n)  { cursor_row_     = n; }
-   void cursor_move_row_rel(int n)  { cursor_row_    += n; }
-   void cursor_move_row_end()       { cursor_row_     = window_height_ - 1; }
-   void cursor_move_char_abs(int n) { cursor_column_  = n; }
-   void cursor_move_char_rel(int n) { cursor_column_ += n; }
-   void cursor_move_char_end()      { cursor_column_  =
+   virtual void cursor_move_row_abs(int n)  { cursor_row_     = n; }
+   virtual void cursor_move_row_rel(int n)  { cursor_row_    += n; }
+   virtual void cursor_move_row_end()       { cursor_row_     = window_height_ - 1; }
+   virtual void cursor_move_char_abs(int n) { cursor_column_  = n; }
+   virtual void cursor_move_char_rel(int n) { cursor_column_ += n; }
+   virtual void cursor_move_char_end()      { cursor_column_  =
          buf_->line_length(window_offset_ + cursor_row_); }
-   void cursor_move_word_next();
-   void cursor_move_word_prev();
+   virtual void cursor_move_word_next();
+   virtual void cursor_move_word_prev();
 
-   void window_centre_cursor() {
+   virtual void window_centre_cursor() {
          int t = window_height_ / 2;
          window_offset_ += cursor_row_ - t;
          cursor_row_ = t; }
 
-   void keyword_search_next();
-   void keyword_search_prev() { }
-   void keyword_toggle();
-   void show_rot13();
-   void indent();
-   void exdent();
-   void join();
-   void duplicate_line();
-   void transpose_lines();
-   void transpose_chars();
-   void new_line();
-   void insert_new_line(bool);
-   void char_insert(char c);
-   void char_delete_forward();
-   void char_delete_backward();
-   void char_delete_to_eol();
-   void char_delete_to_bol();
+   virtual void keyword_search_next();
+   virtual void keyword_search_prev() { }
+   virtual void keyword_toggle();
+   virtual void show_rot13();
+   virtual void indent();
+   virtual void exdent();
+   virtual void join();
+   virtual void duplicate_line();
+   virtual void transpose_lines();
+   virtual void transpose_chars();
+   virtual void new_line();
+   virtual void insert_new_line(bool);
+   virtual void char_insert(char c);
+   virtual void char_delete_forward();
+   virtual void char_delete_backward();
+   virtual void char_delete_to_eol();
+   virtual void char_delete_to_bol();
 protected:
    Buf *buf_;
    int  window_offset_;
@@ -242,6 +242,7 @@ private:
 
    const char *filename_;
    int line_;
+   int type_;
 };
 
 char
@@ -1115,7 +1116,8 @@ void
 App::mainloop()
 {
    Buf  b(filename_);
-   TableView v(&b);
+   View &v = *(type_ ? new TableView(&b) : new View(&b));
+
    char cmd = '\0', prev_cmd;
    int  wh = 20;
 
@@ -1214,7 +1216,15 @@ out:
 App::App(char **a)
 {
    line_ = 0;
-   const char *f0 = a[1];
+   type_ = 0;
+
+   int index = 1;
+   for (; a[index]; index++) {
+      if (a[index][0] != '-') break;
+      if (a[index][1] == 't')
+         type_ = 1; }
+
+   const char *f0 = a[index];
    if (!f0) { filename_ = "e.txt"; return; }
    filename_ = f0;
    char *f1 = strdup(f0);

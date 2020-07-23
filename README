@@ -3,6 +3,9 @@ $ e        open e.txt
 $ e FILE   open FILE
 $ e FILE/N open FILE and go to line N
 
+OPTION
+-t         show DSV file as table
+
 SAVE AND EXIT
 ^x         exit
 m-s        save
