@@ -498,14 +498,23 @@ View::show_rot13()
    const int line = window_offset_ + cursor_row_;
    if (line < 0 || line >= buf_->num_of_lines()) return;
 
-   const char *s { buf_->get_line(line) };
-   std::cout << "r13 ";
-   for (auto i = s; *i; i++) {
-      auto c = *i;
+   const char * row_header = "r13 ";
+   std::cout << row_header;
+
+   const int col = window_width_ - strlen(row_header);
+
+   Str s { buf_->get_line(line) };
+   for (int i = 0; i < min(col, s.len()); i++) {
+      int c = s[i];
+      if (c >= 0x100) {
+         s.output_char(i);
+         continue; }
+
       if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M')) c += 13; else
       if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z')) c -= 13;
-      std::cout << c; }
-   eol_out();
+      std::cout << (char)c; }
+
+   if (col > s.len()) eol_out(); else std::cout << std::endl;
 }
 
 void
