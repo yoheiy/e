@@ -236,6 +236,8 @@ public:
    virtual void char_delete_backward();
    virtual void char_delete_to_eol();
    virtual void char_delete_to_bol();
+   virtual void char_rotate_variant();
+
 protected:
    Buf *buf_;
    int  window_offset_;
@@ -980,6 +982,40 @@ View::char_delete_to_bol()
    buf_->replace_line(line, s1);
 }
 
+void
+View::char_rotate_variant()
+{
+   const int line = window_offset_ + cursor_row_;
+   if (line < 0 || line >=buf_->num_of_lines()) return;
+
+   const char *s0 = buf_->get_line(line);
+   Str s { s0 };
+   if (cursor_column_ < 0 || cursor_column_ >= s.len()) return;
+
+   const int index0 = s.index_chars_to_bytes(cursor_column_);
+   const int index1 = s.index_chars_to_bytes(cursor_column_ + 1);
+   const int len = index1 - index0;
+   char *from = (char *)malloc(len + 1);
+   if (!from) return;
+   strncpy(from, &s0[index0], len);
+   from[len] = '\0';
+
+#include "rottable.h"
+   const char *to = strstr(table_rotate_variant, from);
+   if (!to) return;
+   Str t { to };
+   const int index2 = t.index_chars_to_bytes(1);
+   const int index3 = t.index_chars_to_bytes(2);
+   const int len2 = index3 - index2;
+   const char *to2 = &to[t.index_chars_to_bytes(1)];
+
+   const int cc = cursor_column_;
+   char_delete_forward();
+   for (int i = 0; i < len2; i++)
+      char_insert(to2[i]);
+   cursor_column_ = cc;
+}
+
 class TableView : public View {
 public:
    TableView(Buf *b) : View(b) { }
@@ -1215,6 +1251,7 @@ App::mainloop()
       case 'k': v.keyword_toggle(); break;
       case 'n': v.keyword_search_next(); break;
       case 'p': v.keyword_search_prev(); break;
+      case 'r': v.char_rotate_variant(); break;
          }
          tc("ho");
          v.show();

@@ -34,6 +34,7 @@ EDIT
 m-t / m-T  move line down / up
 m-j        join
 m-d        duplicate
+m-r        variant rotation
 
 VIEW
 m-k        toggle keyword
