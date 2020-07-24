@@ -13,7 +13,8 @@ m-s        save
 CURSOR MOVE
 ^n  / ^p   next / prev line
 ^f  / ^b   next / prev char
-m-f / m-b  next / prev word
+m-f / m-b  next / prev word (isalpha)
+m-F / m-B  next / prev word (isgraph)
 m-a / m-e  head / tail of the line
 m-h / m-l  top / bottom of current window
 

@@ -202,8 +202,8 @@ public:
    virtual void cursor_move_char_rel(int n) { cursor_column_ += n; }
    virtual void cursor_move_char_end()      { cursor_column_  =
          buf_->line_length(window_offset_ + cursor_row_); }
-   virtual void cursor_move_word_next();
-   virtual void cursor_move_word_prev();
+   virtual void cursor_move_word_next(int (*f)(int));
+   virtual void cursor_move_word_prev(int (*f)(int));
 
    virtual void window_centre_cursor() {
          struct winsize w;
@@ -575,7 +575,7 @@ View::show()
 }
 
 void
-View::cursor_move_word_next()
+View::cursor_move_word_next(int (*f)(int))
 {
    const int line = window_offset_ + cursor_row_;
    if (line < 0 || line >= buf_->num_of_lines()) return;
@@ -584,13 +584,13 @@ View::cursor_move_word_next()
    const int len = s.len();
 
    for (int i = cursor_column_; i < len; i++)
-      if (!isalpha(s[i]) && isalpha(s[i + 1])) {
+      if (!f(s[i]) && f(s[i + 1])) {
          cursor_column_ = i + 1;
          break; }
 }
 
 void
-View::cursor_move_word_prev()
+View::cursor_move_word_prev(int (*f)(int))
 {
    const int line = window_offset_ + cursor_row_;
    if (line < 0 || line >= buf_->num_of_lines()) return;
@@ -599,10 +599,10 @@ View::cursor_move_word_prev()
    const int len = s.len();
 
    for (int i = min(cursor_column_, len) - 1; i > 0; i--)
-      if (!isalpha(s[i - 1]) && isalpha(s[i])) {
+      if (!f(s[i - 1]) && f(s[i])) {
          cursor_column_ = i;
          return; }
-   if (cursor_column_ > 0 && isalpha(s[0])) // special case
+   if (cursor_column_ > 0 && f(s[0])) // special case
       cursor_column_ = 0;
 }
 
@@ -954,12 +954,12 @@ public:
    TableView(Buf *b) : View(b) { }
    void show();
    void cursor_move_row_rel(int n);
-   void cursor_move_word_next();
-   void cursor_move_word_prev();
+   void cursor_move_word_next(int (*f)(int));
+   void cursor_move_word_prev(int (*f)(int));
 };
 
 void
-TableView::cursor_move_word_next()
+TableView::cursor_move_word_next(int (*f)(int))
 {
    const int row_prev = cursor_row_ + window_offset_;
    if (row_prev < 0 || row_prev >= buf_->num_of_lines()) return;
@@ -973,7 +973,7 @@ TableView::cursor_move_word_next()
 }
 
 void
-TableView::cursor_move_word_prev()
+TableView::cursor_move_word_prev(int (*f)(int))
 {
 }
 
@@ -1169,8 +1169,10 @@ App::mainloop()
       case 'd': v.duplicate_line(); break;
       case 't': v.transpose_lines(); v.cursor_move_row_rel(+1); break;
       case 'T': v.cursor_move_row_rel(-1); v.transpose_lines(); break;
-      case 'f': v.cursor_move_word_next();  break;
-      case 'b': v.cursor_move_word_prev();  break;
+      case 'f': v.cursor_move_word_next(isalpha);  break;
+      case 'b': v.cursor_move_word_prev(isalpha);  break;
+      case 'F': v.cursor_move_word_next(isgraph);  break;
+      case 'B': v.cursor_move_word_prev(isgraph);  break;
       case 'h': v.cursor_move_row_abs(0); break;
       case 'l': v.cursor_move_row_end();  break;
       case 'v': v.page_up();   break;
