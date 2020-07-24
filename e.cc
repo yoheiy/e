@@ -583,10 +583,10 @@ View::cursor_move_word_next()
    Str s { buf_->get_line(line) };
    const int len = s.len();
 
-   int i = cursor_column_;
-   for (; i < len &&  isalpha(s[i]); i++) ;
-   for (; i < len && !isalpha(s[i]); i++) ;
-   cursor_column_ = i;
+   for (int i = cursor_column_; i < len; i++)
+      if (!isalpha(s[i]) && isalpha(s[i + 1])) {
+         cursor_column_ = i + 1;
+         break; }
 }
 
 void
@@ -598,13 +598,12 @@ View::cursor_move_word_prev()
    Str s { buf_->get_line(line) };
    const int len = s.len();
 
-   if (cursor_column_ > len) cursor_column_ = len;
-   if (cursor_column_ == 0) return;
-
-   int i = cursor_column_;
-   for (; i > 0 &&  isalpha(s[i]); i--) ;
-   for (; i > 0 && !isalpha(s[i]); i--) ;
-   cursor_column_ = i;
+   for (int i = min(cursor_column_, len) - 1; i > 0; i--)
+      if (!isalpha(s[i - 1]) && isalpha(s[i])) {
+         cursor_column_ = i;
+         return; }
+   if (cursor_column_ > 0 && isalpha(s[0])) // special case
+      cursor_column_ = 0;
 }
 
 void
