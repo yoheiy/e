@@ -204,6 +204,8 @@ public:
          buf_->line_length(window_offset_ + cursor_row_); }
    virtual void cursor_move_word_next(int (*f)(int));
    virtual void cursor_move_word_prev(int (*f)(int));
+   virtual void cursor_move_para_next();
+   virtual void cursor_move_para_prev();
 
    virtual void window_centre_cursor() {
          struct winsize w;
@@ -606,6 +608,33 @@ View::cursor_move_word_prev(int (*f)(int))
          return; }
    if (cursor_column_ > 0 && f(s[0])) // special case
       cursor_column_ = 0;
+}
+
+void
+View::cursor_move_para_next()
+{
+   const int line = max(0, window_offset_ + cursor_row_ + 1);
+
+   for (int i = line; i < buf_->num_of_lines(); i++) {
+      if (!*buf_->get_line(i) &&
+           *buf_->get_line(i + 1)) {
+         cursor_row_ = i + 1 - window_offset_;
+         break; }
+   }
+}
+
+void
+View::cursor_move_para_prev()
+{
+   const int line = min(buf_->num_of_lines() - 1,
+                        window_offset_ + cursor_row_ - 1);
+
+   for (int i = line; i >= 0; i--) {
+      if ((!i || !*buf_->get_line(i - 1)) &&
+           *buf_->get_line(i)) {
+         cursor_row_ = i - window_offset_;
+         break; }
+   }
 }
 
 void
@@ -1177,6 +1206,8 @@ App::mainloop()
       case 'B': v.cursor_move_word_prev(isgraph);  break;
       case 'h': v.cursor_move_row_abs(0); break;
       case 'l': v.cursor_move_row_end();  break;
+      case ']': v.cursor_move_para_next();  break;
+      case '[': v.cursor_move_para_prev();  break;
       case 'v': v.page_up();   break;
       case '+': v.set_window_height(v.get_window_height() + 1); break;
       case '-': v.set_window_height(v.get_window_height() - 1); break;

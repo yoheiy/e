@@ -15,6 +15,7 @@ CURSOR MOVE
 ^f  / ^b   next / prev char
 m-f / m-b  next / prev word (isalpha)
 m-F / m-B  next / prev word (isgraph)
+m-] / m-[  next / prev paragraph
 m-a / m-e  head / tail of the line
 m-h / m-l  top / bottom of current window
 
