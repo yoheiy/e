@@ -409,13 +409,15 @@ keyword_hilit_uline(int n)
 }
 
 void
-show_ruler(int padding, int col)
+show_ruler(int padding, int col, int width)
 {
    std::cout << COLOUR_GREY;
    tc("ce");
    lnum_padding_out(padding);
-   for (int i = 1; i < 10; i++)
-      printf("0    %3o", i);
+
+   const int n = (width - padding - 1) / 8;
+   for (int i = 0; i < n; i++)
+      printf("0    %3o", i + 1);
    std::cout << '0';
    std::cout << COLOUR_NORMAL;
 
@@ -534,7 +536,7 @@ View::show()
    eol_out();
    std::cout << COLOUR_NORMAL;
 
-   show_ruler(lnum_col_max + 2, cursor_column_);
+   show_ruler(lnum_col_max + 2, cursor_column_, window_width_);
 
    std::cout << COLOUR_GREY;
    for (int i = from; i < to && i < 0; i++) {
