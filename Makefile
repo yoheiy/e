@@ -2,7 +2,7 @@ o=e
 
 all: $o
 
-$o: e.cc tc.o -ltermcap
+$o: e.o str.o buf.o view.o table_view.o app.o tc.o -ltermcap
 	$(CXX) -o $@ $^
 
 $o: rottable.h
