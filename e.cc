@@ -1303,7 +1303,9 @@ App::go()
 
    tc_init();
 
+   tc("ti"); // alternative screen begin
    mainloop();
+   tc("te"); // alternative screen end
 
 out:
    /* canonical mode */
