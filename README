@@ -37,6 +37,7 @@ m-d        duplicate
 m-r        variant rotation
 
 VIEW
+m-#        switch view (text <-> table)
 m-k        toggle keyword
 m-n / m-p  search keyword next / prev
 

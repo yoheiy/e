@@ -25,7 +25,7 @@ namespace e {
 void
 App::mainloop()
 {
-   Buf  b(filename_);
+   Buf  &b = *buf_;
    View &v = *(type_ ? new TableView(&b) : new View(&b));
 
    char cmd = '\0', prev_cmd;
@@ -44,6 +44,7 @@ App::mainloop()
 
       if (prev_cmd == ESC) {
          switch (cmd) {
+      case '#': type_ = !type_; delete &v; return;
       case '<': v.window_top();     break;
       case '>': v.window_bottom();  break;
       case 'j': v.join(); break;
@@ -86,7 +87,7 @@ App::mainloop()
       case 'Y': v.insert_new_line(false); break;
       case 'T': v.transpose_chars(); break;
       case 'V': v.page_down(); break;
-      case 'X': tc("cl"); return;
+      case 'X': type_ = -1; tc("cl"); return;
       case 'D': v.char_delete_forward();  break;
       case 'H': v.char_delete_backward(); break;
       case 'K': v.char_delete_to_eol();   break;
@@ -118,7 +119,12 @@ App::go()
    tc_init();
 
    tc("ti"); // alternative screen begin
-   mainloop();
+   buf_ = new Buf(filename_);
+
+   while (type_ >= 0)
+      mainloop();
+
+   delete buf_;
    tc("te"); // alternative screen end
 
 out:

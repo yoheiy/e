@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <sys/ioctl.h>
 
+#include "buf.h"
+
 namespace e {
 
 class App {
@@ -22,6 +24,8 @@ private:
    const char *filename_;
    int line_;
    int type_;
+
+   Buf *buf_;
 };
 
 } // namespace
