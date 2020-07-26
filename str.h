@@ -2,6 +2,7 @@
 #define str_h
 
 #include <vector>
+#include <cstring>
 
 namespace e {
 

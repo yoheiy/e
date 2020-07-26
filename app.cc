@@ -12,6 +12,7 @@
 #include "buf.h"
 #include "view.h"
 #include "table_view.h"
+#include "para_view.h"
 #include "app.h"
 
 extern "C" {
@@ -26,7 +27,8 @@ void
 App::mainloop()
 {
    Buf  &b = *buf_;
-   View &v = *(type_ ? new TableView(&b) : new View(&b));
+   View &v = *(type_ == 1 ? new TableView(&b) :
+               type_ == 2 ? new ParaView(&b) : new View(&b));
 
    char cmd = '\0', prev_cmd;
 
@@ -45,6 +47,7 @@ App::mainloop()
       if (prev_cmd == ESC) {
          switch (cmd) {
       case '#': type_ = !type_; delete &v; return;
+      case '$': type_ = type_ != 2 ? 2 : 0; delete &v; return;
       case '<': v.window_top();     break;
       case '>': v.window_bottom();  break;
       case 'j': v.join(); break;

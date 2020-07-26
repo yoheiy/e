@@ -1,26 +1,8 @@
 #ifndef table_view_h
 #define table_view_h
 
-#include <termios.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <libgen.h>
-#include <cstring>
-#include <cstdio>
-#include <vector>
-#include <iostream>
-#include <algorithm>
-#include <sys/ioctl.h>
-
-#include "str.h"
 #include "buf.h"
 #include "view.h"
-
-extern "C" {
-   int tc_init();
-   int tc(const char *);
-}
 
 namespace e {
 

@@ -38,6 +38,7 @@ m-r        variant rotation
 
 VIEW
 m-#        switch view (text <-> table)
+m-$        switch view (text <-> par)
 m-k        toggle keyword
 m-n / m-p  search keyword next / prev
 

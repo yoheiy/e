@@ -20,7 +20,6 @@
 #include "buf.h"
 #include "view.h"
 #include "table_view.h"
-// #include "app.h"
 
 extern "C" {
    int tc_init();
