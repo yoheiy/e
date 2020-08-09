@@ -13,7 +13,9 @@ m-s        save
 CURSOR MOVE
 ^n  / ^p   next / prev line
 ^f  / ^b   next / prev char
-m-f / m-b  next / prev word
+m-f / m-b  next / prev word (isalpha)
+m-F / m-B  next / prev word (isgraph)
+m-] / m-[  next / prev paragraph
 m-a / m-e  head / tail of the line
 m-h / m-l  top / bottom of current window
 
@@ -32,8 +34,11 @@ EDIT
 m-t / m-T  move line down / up
 m-j        join
 m-d        duplicate
+m-r        variant rotation
 
 VIEW
+m-#        switch view (text <-> table)
+m-$        switch view (text <-> par)
 m-k        toggle keyword
 m-n / m-p  search keyword next / prev
 
