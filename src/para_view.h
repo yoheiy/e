@@ -14,10 +14,10 @@ public:
    virtual void cursor_move_para_next() { cursor_move_row_rel(+1); }
    virtual void cursor_move_para_prev() { cursor_move_row_rel(-1); }
    virtual void mode_line();
+   virtual void transpose_lines(); // transpose para
 
    // TODO
    virtual void duplicate_line()  { } // duplicate para
-   virtual void transpose_lines() { } // transpose para
 
    virtual void page_down() { }
    virtual void page_up()   { }
