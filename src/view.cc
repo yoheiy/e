@@ -495,11 +495,7 @@ View::transpose_lines()
 {
    int line = window_offset_ + cursor_row_;
    if (line < 0 || line + 1 >= buf_->num_of_lines()) return;
-   const char *s0 = buf_->get_line(line);
-   const char *s1 = buf_->get_line(line + 1);
-
-   buf_->replace_line(line,     s1);
-   buf_->replace_line(line + 1, s0);
+   buf_->rotate_lines(line, /*range=*/2, /*dist=*/1);
 }
 
 // +-0-+-1-+-2-+      +-0-+-1-+-2-+

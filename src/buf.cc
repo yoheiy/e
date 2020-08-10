@@ -98,6 +98,19 @@ Buf::replace_line(int n, const char* s)
    dirty_ = true;
 }
 
+void
+Buf::rotate_lines(int n, int range, int dist)
+{
+   if (lines.size() < n + range) return;
+   while (dist < 0) dist += range;
+
+   for (int i = 0; i < dist; i++) {
+      const char *t = lines[n];
+      for (int j = 0; j < range - 1; j++)
+         lines[n + j] = lines[n + j + 1];
+      lines[n + range - 1] = t; }
+}
+
 const char *
 Buf::get_line(int n)
 {

@@ -16,6 +16,7 @@ public:
    void delete_line(int n);
    void insert_empty_line(int n);
    void replace_line(int n, const char* s);
+   void rotate_lines(int n, int range, int dist);
 
    int num_of_lines() { return lines.size(); }
    int line_length(int n);
