@@ -32,7 +32,7 @@ App::mainloop()
 
    char cmd = '\0', prev_cmd;
 
-   v.cursor_move_row_abs(line_);
+   v.set_current_line(line_);
    if (line_) v.window_centre_cursor();
    tc("cl");
    v.show();
@@ -46,8 +46,12 @@ App::mainloop()
 
       if (prev_cmd == ESC) {
          switch (cmd) {
-      case '#': type_ = !type_; delete &v; return;
-      case '$': type_ = type_ != 2 ? 2 : 0; delete &v; return;
+      case '#': type_ = type_ != 1 ? 1 : 0;
+         line_ = v.current_line();
+         delete &v; return;
+      case '$': type_ = type_ != 2 ? 2 : 0;
+         line_ = v.current_line();
+         delete &v; return;
       case '<': v.window_top();     break;
       case '>': v.window_bottom();  break;
       case 'j': v.join(); break;

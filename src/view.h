@@ -54,6 +54,8 @@ public:
    virtual void char_delete_to_bol();
    virtual void char_rotate_variant();
 
+   virtual int current_line() { return window_offset_ + cursor_row_; }
+   virtual void set_current_line(int l) { cursor_row_ = l - window_offset_; }
 protected:
    Buf *buf_;
    int  window_offset_;

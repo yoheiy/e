@@ -15,6 +15,8 @@ public:
    virtual void cursor_move_para_prev() { cursor_move_row_rel(-1); }
    virtual void mode_line();
    virtual void transpose_lines(); // transpose para
+   virtual int current_line();
+   virtual void set_current_line(int l);
 
    // TODO
    virtual void duplicate_line()  { } // duplicate para

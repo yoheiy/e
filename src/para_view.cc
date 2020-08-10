@@ -82,4 +82,35 @@ special:
    buf_->delete_line(n2);
 }
 
+int
+ParaView::current_line()
+{
+   int n = 0;
+
+   for (int i = window_offset_; i < buf_->num_of_lines(); i++) {
+      if (i == 0 || (!*buf_->get_line(i - 1) &&
+                      *buf_->get_line(i))) {
+         if (n == cursor_row_)
+            return i;
+         n++; } }
+
+   return buf_->num_of_lines();
+}
+
+void
+ParaView::set_current_line(int l)
+{
+   int n = 0;
+
+   for (int i = window_offset_; i < buf_->num_of_lines(); i++) {
+      if (i == 0 || (!*buf_->get_line(i - 1) &&
+                      *buf_->get_line(i)))
+         n++;
+      if (i == l) {
+         cursor_row_ = n - 1;
+         return; } }
+
+   cursor_row_ = n;
+}
+
 } // namespace
