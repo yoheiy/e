@@ -69,17 +69,10 @@ ParaView::transpose_lines()
          if (n == cursor_row_ + 2) n2 = i;
          n++; } }
 
-   if (!n1) return;
-   if (!n2) goto special;
+   if (!n1--) return;
+   if (!n2--) n2 = buf_->num_of_lines();
+   buf_->rotate_lines(n1, /*range=*/n2 - n1, /*dist=*/1);
    buf_->rotate_lines(n0, /*range=*/n2 - n0, /*dist=*/n1 - n0);
-   return;
-
-special:
-   n2 = buf_->num_of_lines();
-
-   buf_->insert_empty_line(n2);
-   buf_->rotate_lines(n0, /*range=*/n2 + 1 - n0, /*dist=*/n1 - n0);
-   buf_->delete_line(n2);
 }
 
 int
