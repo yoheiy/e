@@ -109,6 +109,7 @@ Buf::rotate_lines(int n, int range, int dist)
       for (int j = 0; j < range - 1; j++)
          lines[n + j] = lines[n + j + 1];
       lines[n + range - 1] = t; }
+   dirty_ = true;
 }
 
 const char *
