@@ -26,7 +26,7 @@ void
 ParaView::mode_line()
 {
    std::cout << COLOUR_GREY_BG;
-   std::cout << "== " << buf_->filename() <<
+   std::cout << "== " << buf_->filename_of_line(current_line()) <<
                 (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
                 " [par] ==";
    eol_out();

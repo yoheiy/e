@@ -221,7 +221,7 @@ View::show()
    buf_->show(v, from, to);
 
    std::cout << COLOUR_GREY_BG;
-   std::cout << "== " << buf_->filename() <<
+   std::cout << "== " << buf_->filename_of_line(cursor_line) <<
                 (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
                 " [" << from << ":" << to << "] ==";
    eol_out();

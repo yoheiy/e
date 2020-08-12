@@ -126,12 +126,10 @@ App::go()
    tc_init();
 
    tc("ti"); // alternative screen begin
-   buf_ = new Buf(filename_);
 
    while (type_ >= 0)
       mainloop();
 
-   delete buf_;
    tc("te"); // alternative screen end
 
 out:
@@ -146,29 +144,16 @@ App::App(char **a)
    line_ = 0;
    type_ = 0;
 
-   int index = 1;
-   for (; a[index]; index++) {
-      if (a[index][0] != '-') break;
-      if (a[index][1] == 't')
-         type_ = 1; }
+   buf_ = new Buf(*++a ? *a : "e.txt");
+   if (!*a) return;
 
-   const char *f0 = a[index];
-   if (!f0) { filename_ = "e.txt"; return; }
-   filename_ = f0;
-   char *f1 = strdup(f0);
-   if (!f1) return;
-   const char *f2 = dirname(f1);
-   struct stat buf;
-   if (stat(f2, &buf) == 0 && S_ISDIR(buf.st_mode)) { free(f1); return; }
-   char *f3 = strdup(f2);
-   free(f1);
-   if (!f3) return;
-   f1 = strdup(f0);
-   if (!f1) { free(f3); return; }
-   f2 = basename(f1);
-   line_ = atoi(f2);
-   free(f1);
-   filename_ = f3;
+   for (a++; *a; a++)
+      buf_->load(*a);
+}
+
+App::~App()
+{
+   delete buf_;
 }
 
 } // namespace

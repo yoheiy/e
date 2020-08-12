@@ -17,6 +17,7 @@ namespace e {
 class App {
 public:
    App(char **a);
+   ~App();
    void go();
 private:
    void mainloop();

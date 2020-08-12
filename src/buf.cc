@@ -35,29 +35,41 @@ namespace e {
 
 Buf::Buf(const char *filename) : dirty_(false), new_file_(false)
 {
-   filename_ = strdup(filename);
+   load(filename);
+}
+
+void
+Buf::load(const char *filename)
+{
+   filename_.push_back(strdup(filename));
 
    FILE *f = fopen(filename, "r");
    if (!f) {
       new_file_ = true;
+      filesize_.push_back(0);
       return; }
 
+   int n = 0;
    char b[160];
    while (fgets(b, sizeof b, f)) {
+      n++;
       chop(b);
       lines.push_back(strdup(b)); }
+
+   filesize_.push_back(n);
 }
 
 void
 Buf::save()
 {
-   FILE *f = fopen(filename_, "w");
-   if (!f) return;
+   for (int i = 0; i < filename_.size(); i++) {
+      FILE *f = fopen(filename_[i], "w");
+      if (!f) continue;
 
-   for (auto i : lines) {
-      fputs(i,    f);
-      fputc('\n', f); }
-   if (fclose(f) == EOF) return;
+      for (int j = file_pos(i); j < file_pos(i + 1); j++) {
+         fputs(lines[j], f);
+         fputc('\n', f); }
+      if (fclose(f) == EOF) continue; }
    dirty_ = new_file_ = false;
 }
 
@@ -78,6 +90,7 @@ Buf::delete_line(int n)
    free((void *)*i);
 
    lines.erase(i);
+   filesize_[pos_file(n)]--;
    dirty_ = true;
 }
 
@@ -88,6 +101,7 @@ Buf::insert_empty_line(int n)
    auto s = strdup("");
 
    lines.insert(i, s);
+   filesize_[pos_file(n)]++;
    dirty_ = true;
 }
 
@@ -119,15 +133,40 @@ Buf::get_line(int n)
 }
 
 const char *
-Buf::filename()
+Buf::filename(int n)
 {
-   return filename_;
+   return filename_[n];
+}
+
+const char *
+Buf::filename_of_line(int n)
+{
+   return filename_[pos_file(n)];
 }
 
 int
 Buf::line_length(int n)
 {
    return n < 0 || n >= lines.size() ? 0 : Str(lines[n]).len();
+}
+
+int
+Buf::file_pos(int n)
+{
+   int r = 0;
+   for (int i = 0; i < n; i++)
+      r += filesize_[i];
+   return r;
+}
+
+int
+Buf::pos_file(int n)
+{
+   int r = 0;
+   for (int i = 0; i < filesize_.size(); i++) {
+      r += filesize_[i];
+      if (n < r) return i; }
+   return 0; // error
 }
 
 } // namespace
