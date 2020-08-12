@@ -1,9 +1,6 @@
 OPEN
 $ e [FILE]...  open FILE(s) ; open e.txt if no FILE given
 
-OPTION
--t         show DSV file as table
-
 SAVE AND EXIT
 ^x         exit
 m-s        save
