@@ -66,18 +66,18 @@ TableView::cursor_move_row_rel(int n)
    const int row_next = cursor_row_ + window_offset_;
 
    if (row_prev < 0 || row_prev >= buf_->num_of_lines()) return;
-   int c = 0;
-   const char *s { buf_->get_line(row_prev) };
-   for (int i = 0; i <= col_prev; i++)
-      if (s[i] == ':') c++;
-
    if (row_next < 0 || row_next >= buf_->num_of_lines()) return;
-   int c2 = 0;
-   const char *t { buf_->get_line(row_next) };
-   for (int i = 0; i < strlen(t); i++)
-      if (t[i] == ':' && ++c2 == c) {
-         Str s { t };
-         cursor_column_ = s.index_bytes_to_chars(i) + 1;
+   int dc = 0; // delim count
+   int cc = 0; // col in the cell
+
+   Str sp { buf_->get_line(row_prev) }; // str prev
+   for (int i = 0; i <= col_prev; i++)
+      if (sp[i] == ':') dc++;
+
+   Str sn { buf_->get_line(row_next) }; // str next
+   for (int i = 0; i < sn.len(); i++)
+      if (sn[i] == ':' && !--dc) {
+         cursor_column_ = i + 1;
          break; }
 }
 
