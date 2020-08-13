@@ -13,6 +13,7 @@
 #include "view.h"
 #include "table_view.h"
 #include "para_view.h"
+#include "isearch_view.h"
 #include "app.h"
 
 extern "C" {
@@ -28,7 +29,9 @@ App::mainloop()
 {
    Buf  &b = *buf_;
    View &v = *(type_ == 1 ? new TableView(&b) :
-               type_ == 2 ? new ParaView(&b) : new View(&b));
+               type_ == 2 ? new ParaView(&b) :
+               type_ == 3 ? new ISearchView(&b) :
+                            new View(&b));
 
    char cmd = '\0', prev_cmd;
 
@@ -42,6 +45,7 @@ App::mainloop()
          v.char_insert(cmd);
          tc("ho");
          v.show();
+         tc("cd");
          continue; }
 
       if (prev_cmd == ESC) {
@@ -50,6 +54,9 @@ App::mainloop()
          line_ = v.current_line();
          delete &v; return;
       case '$': type_ = type_ != 2 ? 2 : 0;
+         line_ = v.current_line();
+         delete &v; return;
+      case '%': type_ = type_ != 3 ? 3 : 0;
          line_ = v.current_line();
          delete &v; return;
       case '<': v.window_top();     break;
