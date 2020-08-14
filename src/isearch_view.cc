@@ -8,7 +8,6 @@
 
 #include "str.h"
 #include "buf.h"
-#include "view.h"
 #include "isearch_view.h"
 
 extern "C" {
@@ -39,7 +38,7 @@ void eol_out();
 int  lnum_col(int n);
 void lnum_padding_out(int n);
 
-ISearchView::ISearchView(Buf *b) : View(b)
+ISearchView::ISearchView(Buf *b) : FilterView(b)
 {
    *pat_ = '\0';
 }
