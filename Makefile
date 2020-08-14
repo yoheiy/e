@@ -5,6 +5,7 @@ o += view.o
 o += table_view.o
 o += para_view.o
 o += isearch_view.o
+o += block_view.o
 o += app.o
 o += tc.o
 o += -ltermcap
@@ -19,13 +20,15 @@ e: $o
 	$(CXX) -o $@ $^
 
 e.o: app.h
-app.o: buf.h view.h table_view.h para_view.h app.h
+app.o: buf.h view.h app.h
+app.o: table_view.h para_view.h isearch_view.h block_view.h
 buf.o: str.h buf.h
 str.o: str.h
 view.o:         str.h buf.h view.h rottable.h
 para_view.o:    str.h buf.h view.h para_view.h
 table_view.o:   str.h buf.h view.h table_view.h
 isearch_view.o: str.h buf.h view.h isearch_view.h
+block_view.o:   str.h buf.h view.h block_view.h
 
 clean:
 	$(RM) $o *.o

@@ -35,6 +35,7 @@ VIEW
 m-#        switch view (text <-> table)
 m-$        switch view (text <-> par)
 m-%        switch view (text <-> isearch)
+m-^        switch view (text <-> block)
 m-k        toggle keyword
 m-n / m-p  search keyword next / prev
 

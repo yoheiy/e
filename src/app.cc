@@ -14,6 +14,7 @@
 #include "table_view.h"
 #include "para_view.h"
 #include "isearch_view.h"
+#include "block_view.h"
 #include "app.h"
 
 extern "C" {
@@ -31,6 +32,7 @@ App::mainloop()
    View &v = *(type_ == 1 ? new TableView(&b) :
                type_ == 2 ? new ParaView(&b) :
                type_ == 3 ? new ISearchView(&b) :
+               type_ == 4 ? new BlockView(&b) :
                             new View(&b));
 
    char cmd = '\0', prev_cmd;
@@ -50,13 +52,12 @@ App::mainloop()
 
       if (prev_cmd == ESC) {
          switch (cmd) {
-      case '#': type_ = type_ != 1 ? 1 : 0;
-         line_ = v.current_line();
-         delete &v; return;
-      case '$': type_ = type_ != 2 ? 2 : 0;
-         line_ = v.current_line();
-         delete &v; return;
-      case '%': type_ = type_ != 3 ? 3 : 0;
+      case '@': type_ = 0;                  goto change_view;
+      case '#': type_ = type_ != 1 ? 1 : 0; goto change_view;
+      case '$': type_ = type_ != 2 ? 2 : 0; goto change_view;
+      case '%': type_ = type_ != 3 ? 3 : 0; goto change_view;
+      case '^': type_ = type_ != 4 ? 4 : 0;
+change_view:
          line_ = v.current_line();
          delete &v; return;
       case '<': v.window_top();     break;
