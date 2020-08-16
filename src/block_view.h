@@ -13,8 +13,8 @@ public:
    virtual void mode_line();
    virtual int current_line();
    virtual void set_current_line(int l);
-   virtual void cursor_move_char_abs(int n) { cursor_column_  = n; }
-   virtual void cursor_move_char_rel(int n) { cursor_column_ += n; }
+   virtual void cursor_move_char_abs(int n);
+   virtual void cursor_move_char_rel(int n);
 
    // TODO
    virtual void page_down() { }
