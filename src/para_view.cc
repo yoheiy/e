@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #define COLOUR_ESC "\033"
 #define COLOUR_RED     COLOUR_ESC "[31m"
 #define COLOUR_CYAN    COLOUR_ESC "[36m"
@@ -37,20 +38,25 @@ void
 ParaView::show()
 {
    mode_line();
+   eol_out();
 
-   int n = 0;
-   for (int i = window_offset_; i < buf_->num_of_lines(); i++) {
+   std::vector<int> ll;
+   for (int i = 0; i < buf_->num_of_lines(); i++)
       if (i == 0 || (!*buf_->get_line(i - 1) &&
-                      *buf_->get_line(i))) {
-         lnum_padding_out(lnum_col(buf_->num_of_lines()) - lnum_col(i));
-         std::cout << COLOUR_GREY << i << ": " << COLOUR_NORMAL;
-         if (n == cursor_row_) std::cout << COLOUR_GREY_BG;
-         std::cout << buf_->get_line(i) << " ...";
-         if (n == cursor_row_) std::cout << COLOUR_NORMAL;
-         eol_out();
-         n++; }
+                      *buf_->get_line(i)))
+         ll.push_back(i);
 
-      if (n >= window_height_) break; }
+   for (int i = 0; i < window_height_; i++) {
+      int x = window_offset_ + i;
+      if (x < 0 || x >= ll.size()) { eol_out(); continue; }
+      int k = ll[x];
+      lnum_padding_out(lnum_col(buf_->num_of_lines()) - lnum_col(k));
+      std::cout << COLOUR_GREY << k << ": " << COLOUR_NORMAL;
+      if (i == cursor_row_) std::cout << COLOUR_GREY_BG;
+      std::cout << buf_->get_line(k) << " ...";
+      if (i == cursor_row_) std::cout << COLOUR_NORMAL;
+      eol_out();
+   }
 }
 
 void
@@ -61,12 +67,12 @@ ParaView::transpose_lines()
        n1 = 0,
        n2 = 0;
 
-   for (int i = window_offset_; i < buf_->num_of_lines(); i++) {
+   for (int i = 0; i < buf_->num_of_lines(); i++) {
       if (i == 0 || (!*buf_->get_line(i - 1) &&
                       *buf_->get_line(i))) {
-         if (n == cursor_row_ + 0) n0 = i;
-         if (n == cursor_row_ + 1) n1 = i;
-         if (n == cursor_row_ + 2) n2 = i;
+         if (n == window_offset_ + cursor_row_ + 0) n0 = i;
+         if (n == window_offset_ + cursor_row_ + 1) n1 = i;
+         if (n == window_offset_ + cursor_row_ + 2) n2 = i;
          n++; } }
 
    if (!n1--) return;
@@ -80,10 +86,10 @@ ParaView::current_line()
 {
    int n = 0;
 
-   for (int i = window_offset_; i < buf_->num_of_lines(); i++) {
+   for (int i = 0; i < buf_->num_of_lines(); i++) {
       if (i == 0 || (!*buf_->get_line(i - 1) &&
                       *buf_->get_line(i))) {
-         if (n == cursor_row_)
+         if (n == window_offset_ + cursor_row_)
             return i;
          n++; } }
 
@@ -95,15 +101,12 @@ ParaView::set_current_line(int l)
 {
    int n = 0;
 
-   for (int i = window_offset_; i < buf_->num_of_lines(); i++) {
-      if (i == 0 || (!*buf_->get_line(i - 1) &&
-                      *buf_->get_line(i)))
+   for (int i = 0; i < buf_->num_of_lines(); i++) {
+      if ((i == 0 || !*buf_->get_line(i - 1)) && *buf_->get_line(i))
          n++;
       if (i == l) {
-         cursor_row_ = n - 1;
+         window_offset_ = n - cursor_row_ - 1;
          return; } }
-
-   cursor_row_ = n;
 }
 
 } // namespace

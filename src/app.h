@@ -24,6 +24,7 @@ private:
 
    const char *filename_;
    int line_;
+   int crow_;
    int type_;
 
    Buf *buf_;
