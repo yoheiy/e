@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #define COLOUR_ESC "\033"
 #define COLOUR_RED     COLOUR_ESC "[31m"
 #define COLOUR_CYAN    COLOUR_ESC "[36m"
@@ -9,11 +10,6 @@
 #include "str.h"
 #include "buf.h"
 #include "isearch_view.h"
-
-extern "C" {
-   int tc_init();
-   int tc(const char *);
-}
 
 namespace {
 
@@ -38,6 +34,16 @@ void eol_out();
 int  lnum_col(int n);
 void lnum_padding_out(int n);
 
+void
+show_pat_line(const char *pat)
+{
+   std::cout << '[' << pat;
+   std::cout << COLOUR_GREY_BG;
+   std::cout << ']';
+   std::cout << COLOUR_NORMAL;
+   eol_out();
+}
+
 ISearchView::ISearchView(Buf *b) : FilterView(b)
 {
    *pat_ = '\0';
@@ -46,22 +52,47 @@ ISearchView::ISearchView(Buf *b) : FilterView(b)
 void
 ISearchView::char_insert(char c)
 {
+   const int cl = current_line();
+
    const int l = strlen(pat_);
    if (l + 1 == sizeof pat_) return;
    pat_[l] = c;
    pat_[l + 1] = '\0';
+
+   int n = 0;
+   for (int i = 0; i < buf_->num_of_lines(); i++) {
+      if (i == cl) {
+         window_offset_ = n - cursor_row_;
+         return; }
+      if (strstr(buf_->get_line(i), pat_))
+         n++; }
+   window_offset_ = n - cursor_row_ - 1;
 }
 
 void
 ISearchView::char_delete_backward()
 {
+   const int cl = current_line();
+
    chop(pat_);
+
+   int n = 0;
+   for (int i = 0; i < buf_->num_of_lines(); i++) {
+      if (i == cl) {
+         window_offset_ = n - cursor_row_;
+         return; }
+      if (strstr(buf_->get_line(i), pat_))
+         n++; }
 }
 
 void
 ISearchView::char_delete_to_bol()
 {
+   const int cl = current_line();
+
    *pat_ = '\0';
+
+   set_current_line(cl);
 }
 
 void
@@ -70,10 +101,7 @@ ISearchView::mode_line()
    std::cout << COLOUR_GREY_BG;
    std::cout << "== " << buf_->filename_of_line(current_line()) <<
                 (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
-                " [isearch] == ";
-   std::cout << COLOUR_NORMAL;
-   std::cout << '[' << pat_ << ']';
-   std::cout << COLOUR_GREY_BG;
+                " [isearch] ==";
    eol_out();
    std::cout << COLOUR_NORMAL;
 }
@@ -82,20 +110,28 @@ void
 ISearchView::show()
 {
    mode_line();
+   show_pat_line(pat_);
 
-   int n = 0;
-   for (int i = window_offset_; i < buf_->num_of_lines(); i++) {
-      const char *s = buf_->get_line(i);
-      if (strstr(s, pat_)) {
-         lnum_padding_out(lnum_col(buf_->num_of_lines()) - lnum_col(i));
-         std::cout << COLOUR_GREY << i << ": " << COLOUR_NORMAL;
-         if (n == cursor_row_) std::cout << COLOUR_GREY_BG;
-         std::cout << s << '$';
-         if (n == cursor_row_) std::cout << COLOUR_NORMAL;
+   std::vector<int> ll;
+   for (int i = 0; i < buf_->num_of_lines(); i++)
+      if (strstr(buf_->get_line(i), pat_))
+         ll.push_back(i);
+
+   for (int i = 0; i < window_height_; i++) {
+      int x = window_offset_ + i;
+      if (x < 0 || x >= ll.size()) {
+         std::cout << (i == cursor_row_ ? COLOUR_GREY_BG : COLOUR_GREY);
+         std::cout << '$' << COLOUR_NORMAL;
          eol_out();
-         n++; }
+         continue; }
+      int k = ll[x];
 
-      if (n >= window_height_) break; }
+      lnum_padding_out(lnum_col(buf_->num_of_lines()) - lnum_col(k));
+      std::cout << COLOUR_GREY << k << ": " << COLOUR_NORMAL;
+      if (i == cursor_row_) std::cout << COLOUR_GREY_BG;
+      std::cout << buf_->get_line(k) << '$';
+      if (i == cursor_row_) std::cout << COLOUR_NORMAL;
+      eol_out(); }
 }
 
 int
@@ -103,10 +139,10 @@ ISearchView::current_line()
 {
    int n = 0;
 
-   for (int i = window_offset_; i < buf_->num_of_lines(); i++) {
+   for (int i = 0; i < buf_->num_of_lines(); i++) {
       const char *s = buf_->get_line(i);
       if (strstr(s, pat_)) {
-         if (n == cursor_row_)
+         if (n == window_offset_ + cursor_row_)
             return i;
          n++; } }
 
@@ -116,8 +152,8 @@ ISearchView::current_line()
 void
 ISearchView::set_current_line(int l)
 {
-   window_offset_ = l;
-   cursor_row_    = 0;
+   // assume pat_ == ""
+   window_offset_ = l - cursor_row_;
 }
 
 } // namespace
