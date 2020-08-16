@@ -37,8 +37,8 @@ App::mainloop()
 
    char cmd = '\0', prev_cmd;
 
+   v.set_cursor_row(crow_);
    v.set_current_line(line_);
-   if (line_) v.window_centre_cursor();
    tc("cl");
    v.show();
 
@@ -59,6 +59,7 @@ App::mainloop()
       case '^': type_ = type_ != 4 ? 4 : 0;
 change_view:
          line_ = v.current_line();
+         crow_ = v.cursor_row();
          delete &v; return;
       case '<': v.window_top();     break;
       case '>': v.window_bottom();  break;
@@ -150,6 +151,7 @@ out:
 App::App(char **a)
 {
    line_ = 0;
+   crow_ = 0;
    type_ = 0;
 
    buf_ = new Buf(*++a ? *a : "e.txt");
