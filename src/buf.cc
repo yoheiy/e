@@ -33,7 +33,7 @@ chop(char *s)
 
 namespace e {
 
-Buf::Buf(const char *filename) : dirty_(false), new_file_(false)
+Buf::Buf(const char *filename) : dirty_(false), new_file_(false), undo_pos_(0)
 {
    load(filename);
 }
@@ -86,8 +86,10 @@ Buf::show(std::vector<const char *> &v, int from, int to)
 void
 Buf::delete_line(int n)
 {
+   undo_push();
+
    auto i = lines.begin() + n;
-   free((void *)*i);
+   // free((void *)*i);
 
    lines.erase(i);
    filesize_[pos_file(n)]--;
@@ -97,6 +99,8 @@ Buf::delete_line(int n)
 void
 Buf::insert_empty_line(int n)
 {
+   undo_push();
+
    auto i = lines.begin() + n;
    auto s = strdup("");
 
@@ -108,6 +112,8 @@ Buf::insert_empty_line(int n)
 void
 Buf::replace_line(int n, const char* s)
 {
+   undo_push();
+
    lines.at(n) = s;
    dirty_ = true;
 }
@@ -115,6 +121,8 @@ Buf::replace_line(int n, const char* s)
 void
 Buf::rotate_lines(int n, int range, int dist)
 {
+   undo_push();
+
    if (lines.size() < n + range) return;
    while (dist < 0) dist += range;
 
@@ -167,6 +175,28 @@ Buf::pos_file(int n)
       r += filesize_[i];
       if (n < r) return i; }
    return 0; // error
+}
+
+void
+Buf::undo_push()
+{
+   // if (!undo_buf_.empty() && undo_buf_.back() == lines) return;
+   if (!undo_buf_.empty() && undo_buf_[undo_pos_] == lines) return;
+
+   undo_buf_.push_back(lines);
+   undo_pos_ = undo_buf_.size() - 1;
+}
+
+void
+Buf::undo_pop(int n)
+{
+   undo_push();
+
+   int p = undo_pos_ + n;
+   if (p < 0 || p >= undo_buf_.size()) return;
+
+   lines = undo_buf_[p];
+   undo_pos_ = p;
 }
 
 } // namespace

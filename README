@@ -30,6 +30,7 @@ m-t / m-T  move line down / up
 m-j        join
 m-d        duplicate
 m-r        variant rotation
+m-{ / m-}  undo / redo
 
 VIEW
 m-#        switch view (text <-> table)

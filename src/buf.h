@@ -24,6 +24,9 @@ public:
    const char *filename(int n = 0);
    const char *filename_of_line(int n);
    const char *get_line(int n);
+
+   void undo_pop(int n);
+   int undo_pos() { return undo_pos_; }
 private:
    int file_pos(int n);
    int pos_file(int n);
@@ -32,6 +35,9 @@ private:
    std::vector<int> filesize_;
    bool dirty_;
    bool new_file_;
+   std::vector<std::vector<const char *>> undo_buf_;
+   int undo_pos_;
+   void undo_push();
 };
 
 } // namespace

@@ -78,6 +78,8 @@ change_view:
       case 'v': v.page_up();   break;
       case '+': v.set_window_height(v.get_window_height() + 1); break;
       case '-': v.set_window_height(v.get_window_height() - 1); break;
+      case '{': b.undo_pop(-1); break;
+      case '}': b.undo_pop(+1); break;
       case 's': b.save(); break;
       case 'k': v.keyword_toggle(); break;
       case 'n': v.keyword_search_next(); break;

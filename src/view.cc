@@ -224,6 +224,7 @@ View::show()
    std::cout << "== " << buf_->filename_of_line(cursor_line) <<
                 (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
                 " [" << from << ":" << to << "] ==";
+   std::cout << " { u" << buf_->undo_pos() << " }";
    eol_out();
    std::cout << COLOUR_NORMAL;
 
@@ -430,7 +431,7 @@ View::indent()
 
    const char *s = copy_indent(n1, &s0[n0]);
    if (!s) return;
-   free((void *)s0);
+   // free((void *)s0);
    buf_->replace_line(line, s);
 
    cursor_column_ = n1;
@@ -448,7 +449,7 @@ View::exdent()
    if (n1 < 0) return;
    const char *s = copy_indent(n1, &s0[n0]);
    if (!s) return;
-   free((void *)s0);
+   // free((void *)s0);
    buf_->replace_line(line, s);
 
    cursor_column_ = n1;
@@ -471,7 +472,7 @@ View::join()
 
    strcpy(s, s0);
    strcat(s, s1);
-   free((void *)s0);
+   // free((void *)s0);
    buf_->replace_line(line, s);
    buf_->delete_line(line + 1);
 }
@@ -487,7 +488,7 @@ View::duplicate_line()
    buf_->insert_empty_line(line);
    const char *s2 = buf_->get_line(line);
    buf_->replace_line(line, s1);
-   free((void *)s2);
+   // free((void *)s2);
 }
 
 void
@@ -523,7 +524,7 @@ View::transpose_chars()
       s1[offset0] = s1[offset1];
       s1[offset1] = t; }
    else { /* TODO non-ascii char */ }
-   free((void *)s0);
+   // free((void *)s0);
    buf_->replace_line(line, s1);
 }
 
@@ -550,7 +551,7 @@ View::insert_new_line(bool left)
    s0[index] = '\0';
    t = strdup(s0);
 
-   free((void *)s0);
+   // free((void *)s0);
    if (left) {
       cursor_row_++;
       cursor_column_ = 0; }
@@ -582,7 +583,7 @@ View::char_insert(char c)
    strcpy(s1 + index + 1, s0 + index);
 
    cursor_column_++;
-   free((void *)s0);
+   // free((void *)s0);
    buf_->replace_line(line, s1);
 }
 
@@ -608,7 +609,7 @@ View::char_delete_forward()
    strncpy(s1, s0, index0);
    strcpy(s1 + index0, s0 + index1);
 
-   free((void *)s0);
+   // free((void *)s0);
    buf_->replace_line(line, s1);
 }
 
@@ -642,7 +643,7 @@ View::char_delete_to_eol()
    strncpy(s1, s0, index);
    s1[index] = '\0';
 
-   free((void *)s0);
+   // free((void *)s0);
    buf_->replace_line(line, s1);
 }
 
@@ -661,7 +662,7 @@ View::char_delete_to_bol()
    if (!s1) return;
    cursor_column_ = 0;
 
-   free((void *)s0);
+   // free((void *)s0);
    buf_->replace_line(line, s1);
 }
 
