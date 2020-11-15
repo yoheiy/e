@@ -58,6 +58,8 @@ public:
    virtual int cursor_row() { return cursor_row_; }
    virtual void set_current_line(int l) { window_offset_ = l - cursor_row_; }
    virtual void set_cursor_row(int n) { cursor_row_ = n; }
+
+   virtual void mode_return_ok() { }
 protected:
    Buf *buf_;
    int  window_offset_;

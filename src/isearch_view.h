@@ -17,6 +17,7 @@ public:
    virtual void char_insert(char c);
    virtual void char_delete_backward();
    virtual void char_delete_to_bol();
+   virtual void mode_return_ok();
 
    // TODO
    virtual void page_down() { }

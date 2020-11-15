@@ -108,6 +108,7 @@ change_view:
                    tmp_mode_ = cur_mode_;
                    line_ = v.current_line();
                    crow_ = v.cursor_row();
+                   v.mode_return_ok();
                    delete &v; return; }
            else v.insert_new_line(); break;
       case 'Y': v.insert_new_line(false); break;

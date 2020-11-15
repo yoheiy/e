@@ -113,9 +113,13 @@ ISearchView::show()
    mode_line();
    show_pat_line(pat_);
 
+   char *t_pat = strdup(pat_);
+   char *t_sub = strchr(t_pat, '/');
+   if (t_sub) { *t_sub = '\0'; t_sub++; }
+
    std::vector<int> ll;
    for (int i = 0; i < buf_->num_of_lines(); i++)
-      if (strstr(buf_->get_line(i), pat_))
+      if (strstr(buf_->get_line(i), t_pat))
          ll.push_back(i);
 
    for (int i = 0; i < window_height_; i++) {
@@ -126,26 +130,39 @@ ISearchView::show()
          eol_out();
          continue; }
       int k = ll[x];
-      int l = strlen(pat_);
-      const char *s = buf_->get_line(k);
-      int o = strstr(s, pat_) - s;
-
       lnum_padding_out(lnum_col(buf_->num_of_lines()) - lnum_col(k));
       std::cout << (i == cursor_row_ ? COLOUR_GREY_BG : COLOUR_GREY);
       std::cout << k << ": " << COLOUR_NORMAL;
-      for (int j = 0; j < o; j++) std::cout << s[j];
-      std::cout << COLOUR_HILIGHT;
-      for (int j = o; j < o + l; j++) std::cout << s[j];
-      std::cout << COLOUR_NORMAL;
-      for (int j = o + l; s[j]; j++) std::cout << s[j];
-      std::cout << '$';
+
+      const char *s = buf_->get_line(k);
+      const int l = strlen(t_pat);
+      if (*t_pat) for (;;) {
+         const char * const p = strstr(s, t_pat);
+         if (!p) break;
+         for (const char *q = s; q < p; q++) std::cout << *q;
+         if (!t_sub) {
+            std::cout << COLOUR_HILIGHT;
+            for (const char *q = p; q < &p[l]; q++) std::cout << *q; }
+         else
+            std::cout << COLOUR_CYAN << t_sub;
+         std::cout << COLOUR_NORMAL;
+         s = &p[l]; }
+
+      for (const char *q = s; *q; q++) std::cout << *q;
+      std::cout << COLOUR_GREY << '$' << COLOUR_NORMAL;
       eol_out(); }
+
+   free(t_pat);
 }
 
 int
 ISearchView::current_line()
 {
    int n = 0;
+
+   char *t_pat = strdup(pat_);
+   char *t_sub = strchr(t_pat, '/');
+   if (t_sub) { *t_sub = '\0'; }
 
    for (int i = 0; i < buf_->num_of_lines(); i++) {
       const char *s = buf_->get_line(i);
@@ -154,6 +171,9 @@ ISearchView::current_line()
             return i;
          n++; } }
 
+   free(t_pat);
+
+   return 0;
    return buf_->num_of_lines();
 }
 
@@ -162,6 +182,49 @@ ISearchView::set_current_line(int l)
 {
    // assume pat_ == ""
    window_offset_ = l - cursor_row_;
+}
+
+void
+ISearchView::mode_return_ok()
+{
+   if (!*pat_) return;
+   char *t_pat = strdup(pat_);
+   char *t_sub = strchr(t_pat, '/');
+   if (t_sub) { *t_sub = '\0'; t_sub++; } else { free(t_pat); return; }
+   if (!*t_pat) { free(t_pat); return; }
+   const int l_pat = strlen(t_pat);
+   const int l_sub = strlen(t_sub);
+
+   for (int i = 0; i < buf_->num_of_lines(); i++) {
+      const char *s = buf_->get_line(i);
+      if (!strstr(s, t_pat)) continue;
+
+      int l_new = 1; // for NUL
+      for (;;) {
+         const char * const p = strstr(s, t_pat);
+         if (!p) break;
+         l_new += p - s + l_sub;
+         s = &p[l_pat]; }
+      l_new += strlen(s);
+
+      char *t_new = (char *)malloc(l_new);
+      char *t = t_new;
+      s = buf_->get_line(i);
+      for (;;) {
+         const char * const p = strstr(s, t_pat);
+         if (!p) break;
+         for (const char *q = s; q < p; q++) *t++ = *q;
+         t = strcpy(t, t_sub) + l_sub;
+         s = &p[l_pat]; }
+
+      strcpy(t, s);
+#ifdef DISABLE_UNDO
+      s = buf_->get_line(i);
+      free((void *)s);
+#endif
+      buf_->replace_line(i, t_new); }
+
+   free(t_pat);
 }
 
 } // namespace
