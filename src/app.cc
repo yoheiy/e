@@ -29,10 +29,10 @@ void
 App::mainloop()
 {
    Buf  &b = *buf_;
-   View &v = *(type_ == 1 ? new TableView(&b) :
-               type_ == 2 ? new ParaView(&b) :
-               type_ == 3 ? new ISearchView(&b) :
-               type_ == 4 ? new BlockView(&b) :
+   View &v = *(tmp_mode_ == 1 ? new TableView(&b) :
+               tmp_mode_ == 2 ? new ParaView(&b) :
+               tmp_mode_ == 3 ? new ISearchView(&b) :
+               tmp_mode_ == 4 ? new BlockView(&b) :
                             new View(&b));
 
    char cmd = '\0', prev_cmd;
@@ -52,11 +52,11 @@ App::mainloop()
 
       if (prev_cmd == ESC) {
          switch (cmd) {
-      case '@': type_ = 0;                  goto change_view;
-      case '#': type_ = type_ != 1 ? 1 : 0; goto change_view;
-      case '$': type_ = type_ != 2 ? 2 : 0; goto change_view;
-      case '%': type_ = type_ != 3 ? 3 : 0; goto change_view;
-      case '^': type_ = type_ != 4 ? 4 : 0;
+      case '@': tmp_mode_ = cur_mode_ = 0; goto change_view;
+      case '#': tmp_mode_ = cur_mode_ = 1; goto change_view;
+      case '$': tmp_mode_ = 2; goto change_view;
+      case '%': tmp_mode_ = 3; goto change_view;
+      case '^': tmp_mode_ = 4;
 change_view:
          line_ = v.current_line();
          crow_ = v.cursor_row();
@@ -101,11 +101,19 @@ change_view:
       case 'L': v.window_centre_cursor();   break;
       case 'I': v.indent(); break;
       case 'O': v.exdent(); break;
-      case 'J': v.insert_new_line(); break;
+      case 'G': if (tmp_mode_ != cur_mode_) {
+                   tmp_mode_ = cur_mode_;
+                   delete &v; return; }
+      case 'J': if (tmp_mode_ != cur_mode_) {
+                   tmp_mode_ = cur_mode_;
+                   line_ = v.current_line();
+                   crow_ = v.cursor_row();
+                   delete &v; return; }
+           else v.insert_new_line(); break;
       case 'Y': v.insert_new_line(false); break;
       case 'T': v.transpose_chars(); break;
       case 'V': v.page_down(); break;
-      case 'X': type_ = -1; tc("cl"); return;
+      case 'X': tmp_mode_ = -1; tc("cl"); return;
       case 'D': v.char_delete_forward();  break;
       case 'H': v.char_delete_backward(); break;
       case 'K': v.char_delete_to_eol();   break;
@@ -138,7 +146,7 @@ App::go()
 
    tc("ti"); // alternative screen begin
 
-   while (type_ >= 0)
+   while (tmp_mode_ >= 0)
       mainloop();
 
    tc("te"); // alternative screen end
@@ -154,7 +162,8 @@ App::App(char **a)
 {
    line_ = 0;
    crow_ = 0;
-   type_ = 0;
+   tmp_mode_ = 0;
+   cur_mode_ = 0;
 
    buf_ = new Buf(*++a ? *a : "e.txt");
    if (!*a) return;

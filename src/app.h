@@ -25,7 +25,8 @@ private:
    const char *filename_;
    int line_;
    int crow_;
-   int type_;
+   int tmp_mode_;
+   int cur_mode_;
 
    Buf *buf_;
 };

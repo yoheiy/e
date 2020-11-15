@@ -33,12 +33,14 @@ m-r        variant rotation
 m-{ / m-}  undo / redo
 
 VIEW
-m-#        switch view (text <-> table)
-m-$        switch view (text <-> par)
-m-%        switch view (text <-> isearch)
-m-^        switch view (text <-> block)
+m-@        switch view to text
+m-#        switch view to table
+m-$        switch view to par
+m-%        switch view to isearch
+m-^        switch view to block
 m-k        toggle keyword
 m-n / m-p  search keyword next / prev
+^m  / ^g   return to main mode (text, table) : ok / cancel
 
 BUGS
 search keyword prev doesn't work
