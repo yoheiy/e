@@ -6,6 +6,7 @@
 #define COLOUR_GREY    COLOUR_ESC "[38;5;248m"
 #define COLOUR_NORMAL  COLOUR_ESC "[0m"
 #define COLOUR_GREY_BG COLOUR_ESC "[48;5;248m"
+#define COLOUR_HILIGHT COLOUR_ESC "[43m"
 
 #include "str.h"
 #include "buf.h"
@@ -125,12 +126,19 @@ ISearchView::show()
          eol_out();
          continue; }
       int k = ll[x];
+      int l = strlen(pat_);
+      const char *s = buf_->get_line(k);
+      int o = strstr(s, pat_) - s;
 
       lnum_padding_out(lnum_col(buf_->num_of_lines()) - lnum_col(k));
-      std::cout << COLOUR_GREY << k << ": " << COLOUR_NORMAL;
-      if (i == cursor_row_) std::cout << COLOUR_GREY_BG;
-      std::cout << buf_->get_line(k) << '$';
-      if (i == cursor_row_) std::cout << COLOUR_NORMAL;
+      std::cout << (i == cursor_row_ ? COLOUR_GREY_BG : COLOUR_GREY);
+      std::cout << k << ": " << COLOUR_NORMAL;
+      for (int j = 0; j < o; j++) std::cout << s[j];
+      std::cout << COLOUR_HILIGHT;
+      for (int j = o; j < o + l; j++) std::cout << s[j];
+      std::cout << COLOUR_NORMAL;
+      for (int j = o + l; s[j]; j++) std::cout << s[j];
+      std::cout << '$';
       eol_out(); }
 }
 
