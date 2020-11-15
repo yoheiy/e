@@ -8,7 +8,6 @@ o += isearch_view.o
 o += block_view.o
 o += app.o
 o += tc.o
-o += -ltermcap
 
 vpath %.cc src
 vpath %.c src
@@ -16,7 +15,7 @@ vpath %.h src
 
 all: e
 
-e: $o
+e: $o -ltermcap
 	$(CXX) -o $@ $^
 
 e.o: app.h
