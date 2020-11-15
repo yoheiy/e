@@ -89,7 +89,9 @@ Buf::delete_line(int n)
    undo_push();
 
    auto i = lines.begin() + n;
-   // free((void *)*i);
+#ifdef DISABLE_UNDO
+   free((void *)*i);
+#endif
 
    lines.erase(i);
    filesize_[pos_file(n)]--;
@@ -180,11 +182,12 @@ Buf::pos_file(int n)
 void
 Buf::undo_push()
 {
-   // if (!undo_buf_.empty() && undo_buf_.back() == lines) return;
    if (!undo_buf_.empty() && undo_buf_[undo_pos_] == lines) return;
 
+#ifndef DISABLE_UNDO
    undo_buf_.push_back(lines);
    undo_pos_ = undo_buf_.size() - 1;
+#endif
 }
 
 void
