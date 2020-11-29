@@ -61,14 +61,20 @@ ISearchView::char_insert(char c)
    pat_[l] = c;
    pat_[l + 1] = '\0';
 
+   if (strchr(pat_, '/')) return;
+
+   regex_t r;
+   int err = regcomp(&r, pat_, REG_EXTENDED);
+   if (err) { regfree(&r); return; }
+
    int n = 0;
    for (int i = 0; i < buf_->num_of_lines(); i++) {
-      if (i == cl) {
-         window_offset_ = n - cursor_row_;
-         return; }
-      if (strstr(buf_->get_line(i), pat_))
+      if (i == cl) { n++; break; }
+      if (regexec(&r, buf_->get_line(i), 0, NULL, 0) != REG_NOMATCH)
          n++; }
    window_offset_ = n - cursor_row_ - 1;
+
+   regfree(&r);
 }
 
 void
@@ -78,13 +84,22 @@ ISearchView::char_delete_backward()
 
    chop(pat_);
 
+   if (strchr(pat_, '/')) return;
+
+   regex_t r;
+   int err = regcomp(&r, pat_, REG_EXTENDED);
+   if (err) { regfree(&r); return; }
+
    int n = 0;
    for (int i = 0; i < buf_->num_of_lines(); i++) {
       if (i == cl) {
          window_offset_ = n - cursor_row_;
+         regfree(&r);
          return; }
-      if (strstr(buf_->get_line(i), pat_))
+      if (regexec(&r, buf_->get_line(i), 0, NULL, 0) != REG_NOMATCH)
          n++; }
+
+   regfree(&r);
 }
 
 void
@@ -179,17 +194,21 @@ ISearchView::current_line()
    char *t_sub = strchr(t_pat, '/');
    if (t_sub) { *t_sub = '\0'; }
 
+   regex_t r;
+   int err = regcomp(&r, t_pat, REG_EXTENDED);
+   if (err) { regfree(&r); return 0; }
+
    for (int i = 0; i < buf_->num_of_lines(); i++) {
       const char *s = buf_->get_line(i);
-      if (strstr(s, pat_)) {
+      if (regexec(&r, s, 0, NULL, 0) != REG_NOMATCH) {
          if (n == window_offset_ + cursor_row_)
             return i;
          n++; } }
 
    free(t_pat);
+   regfree(&r);
 
    return 0;
-   return buf_->num_of_lines();
 }
 
 void
