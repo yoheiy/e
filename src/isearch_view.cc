@@ -210,27 +210,38 @@ ISearchView::mode_return_ok()
    const int l_pat = strlen(t_pat);
    const int l_sub = strlen(t_sub);
 
+   regex_t r;
+   int err = regcomp(&r, t_pat, REG_EXTENDED);
+   if (err) { free(t_pat); regfree(&r); return; }
+
    for (int i = 0; i < buf_->num_of_lines(); i++) {
       const char *s = buf_->get_line(i);
-      if (!strstr(s, t_pat)) continue;
+      if (regexec(&r, s, 0, NULL, 0) == REG_NOMATCH) continue;
 
       int l_new = 1; // for NUL
-      for (;;) {
-         const char * const p = strstr(s, t_pat);
-         if (!p) break;
+      while (*s) {
+         regmatch_t m;
+         if (regexec(&r, s, 1, &m, 0) == REG_NOMATCH) break;
+         const char * const p = &s[m.rm_so];
+         const int l = m.rm_eo - m.rm_so;
+         if (!l) { s++; continue; }
          l_new += p - s + l_sub;
-         s = &p[l_pat]; }
+         s = &p[l]; }
       l_new += strlen(s);
 
       char *t_new = (char *)malloc(l_new);
       char *t = t_new;
       s = buf_->get_line(i);
-      for (;;) {
-         const char * const p = strstr(s, t_pat);
-         if (!p) break;
+      while (*s) {
+         regmatch_t m;
+         if (regexec(&r, s, 1, &m, 0) == REG_NOMATCH) break;
+         const char * const p = &s[m.rm_so];
+         const int l = m.rm_eo - m.rm_so;
+         if (!l) { s++; continue; }
          for (const char *q = s; q < p; q++) *t++ = *q;
          t = strcpy(t, t_sub) + l_sub;
-         s = &p[l_pat]; }
+         s = &p[l]; }
+      l_new += strlen(s);
 
       strcpy(t, s);
 #ifdef DISABLE_UNDO
@@ -239,6 +250,7 @@ ISearchView::mode_return_ok()
 #endif
       buf_->replace_line(i, t_new); }
 
+   regfree(&r);
    free(t_pat);
 }
 
