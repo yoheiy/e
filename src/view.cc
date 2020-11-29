@@ -238,16 +238,16 @@ View::show()
       std::cout << COLOUR_LINE_NR << n << ": " << COLOUR_NORMAL;
       keyword_hilit_colour(i, n == cursor_line ? cursor_column_ : -1, window_width_ - lnum_col_max - 2);
 
-      if (n == cursor_line) {
-         int m = min(cursor_column_, buf_->line_length(n));
-         int c = Str(i)[m];
-         lnum_padding_out(lnum_col_max + 2 + m);
+      if (n == cursor_line + 1 && n - 1 >= 0) {
+         int m = min(cursor_column_, buf_->line_length(n - 1));
+         int c = Str(buf_->get_line(n - 1))[m];
+         tc("up");
+         for (int i = 0; i < lnum_col_max + 2 + m; i++) tc("nd");
          std::cout << COLOUR_CURSOR;
-         std::cout << '^';
-         std::cout << m;
+         std::cout << '^' << m;
          std::cout << '#' << std::hex << c << std::dec;
          std::cout << COLOUR_NORMAL;
-         eol_out(); }
+         std::cout << std::endl; }
       ++n; }
 
    std::cout << COLOUR_LINE_NR;
