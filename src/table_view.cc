@@ -9,17 +9,12 @@
 #include <iostream>
 #include <algorithm>
 #include <sys/ioctl.h>
-#define COLOUR_ESC "\033"
-#define COLOUR_RED     COLOUR_ESC "[31m"
-#define COLOUR_CYAN    COLOUR_ESC "[36m"
-#define COLOUR_GREY    COLOUR_ESC "[38;5;248m"
-#define COLOUR_NORMAL  COLOUR_ESC "[0m"
-#define COLOUR_GREY_BG COLOUR_ESC "[48;5;248m"
 
 #include "str.h"
 #include "buf.h"
 #include "view.h"
 #include "table_view.h"
+#include "colour.h"
 
 extern "C" {
    int tc_init();
@@ -116,9 +111,9 @@ tableview_keyword_hilit_colour(const char *s, int col)
          for (int i = cell_col; i < cell_width; i++)
             std::cout << ' ';
          if (i == col)
-            std::cout << COLOUR_GREY_BG << ':' << COLOUR_NORMAL;
+            std::cout << COLOUR_CURSOR << ':' << COLOUR_NORMAL;
          else
-            std::cout << COLOUR_CYAN << '|' << COLOUR_NORMAL;
+            std::cout << COLOUR_TABLE_V_BAR << '|' << COLOUR_NORMAL;
          cell_col = 1;
          continue;
       }
@@ -127,20 +122,20 @@ tableview_keyword_hilit_colour(const char *s, int col)
          for (int j = i; j < len && str[j] != ':'; j++)
             if (j == col) found = 1;
          if (found) {
-            std::cout << COLOUR_GREY_BG;
+            std::cout << COLOUR_CURSOR;
             str.output_char(col);
             std::cout << COLOUR_NORMAL; }
          else
-            std::cout << COLOUR_CYAN << '>' << COLOUR_NORMAL;
+            std::cout << COLOUR_TABLE_V_BAR << '>' << COLOUR_NORMAL;
          cell_col++; }
       if (cell_col >= cell_width) continue;
 
       if ((!i || buf[i - 1] != '~') && buf[i] == '~')
-         std::cout << COLOUR_RED;
+         std::cout << COLOUR_KEYWORD;
       if (i && buf[i - 1] == '~' && buf[i] != '~')
          std::cout << COLOUR_NORMAL;
       if (buf[i] == '^')
-         std::cout << COLOUR_GREY_BG;
+         std::cout << COLOUR_CURSOR;
       str.output_char(i);
       if (buf[i] == '^')
          std::cout << COLOUR_NORMAL;
@@ -149,9 +144,9 @@ tableview_keyword_hilit_colour(const char *s, int col)
    // EOL
    std::cout << COLOUR_NORMAL;
    if (col == len)
-      std::cout << COLOUR_GREY_BG;
+      std::cout << COLOUR_CURSOR;
    else
-      std::cout << COLOUR_GREY;
+      std::cout << COLOUR_EOL;
    std::cout << '$' << COLOUR_NORMAL;
 }
 
@@ -163,13 +158,13 @@ show_content_under_cursor(const char *str, int col)
    for (int i = 0; i < s.len() && i < col; i++)
       if (s[i] == ':') cursor_cell = i + 1;
    for (int j = cursor_cell; j < s.len() && s[j] != ':'; j++) {
-      if (j == col) std::cout << COLOUR_GREY_BG;
+      if (j == col) std::cout << COLOUR_CURSOR;
       s.output_char(j);
       if (j == col) std::cout << COLOUR_NORMAL; }
    if (s[col] == ':')
-      std::cout << COLOUR_GREY_BG << ':' << COLOUR_NORMAL;
+      std::cout << COLOUR_CURSOR << ':' << COLOUR_NORMAL;
    if (col == s.len())
-      std::cout << COLOUR_GREY_BG << '$' << COLOUR_NORMAL;
+      std::cout << COLOUR_CURSOR << '$' << COLOUR_NORMAL;
    eol_out();
 }
 
@@ -183,7 +178,7 @@ TableView::show()
 
    buf_->show(v, from, to);
 
-   std::cout << COLOUR_GREY_BG;
+   std::cout << COLOUR_HEADLINE;
    std::cout << "== " << buf_->filename_of_line(cursor_line) <<
                 (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
                 " [" << from << ":" << to << "] ==";
@@ -195,7 +190,7 @@ TableView::show()
    else
       eol_out();
 
-   std::cout << COLOUR_GREY;
+   std::cout << COLOUR_LINE_NR;
    for (int i = from; i < to && i < 0; i++) {
       lnum_padding_out(lnum_col_max - lnum_col(i));
       std::cout << i << (i == cursor_line ? '>' : '#');
@@ -205,17 +200,18 @@ TableView::show()
    int n = (from < 0) ? 0 : from;
    for (auto i : v) {
       lnum_padding_out(lnum_col_max - lnum_col(n));
-      std::cout << COLOUR_GREY << n << ": " << COLOUR_NORMAL;
+      std::cout << COLOUR_LINE_NR << n << ": " << COLOUR_NORMAL;
       tableview_keyword_hilit_colour(i, n == cursor_line ? cursor_column_ : -1);
       eol_out();
       ++n; }
 
-   std::cout << COLOUR_GREY;
+   std::cout << COLOUR_LINE_NR;
    for (int i = n; i < to; i++) {
       lnum_padding_out(lnum_col_max - lnum_col(i));
       std::cout << i << (i == cursor_line ? '>' : '#');
       eol_out(); }
 
+   std::cout << COLOUR_BOTTOM;
    show_keywords();
    show_rot13();
    std::cout << COLOUR_NORMAL;

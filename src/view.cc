@@ -9,16 +9,11 @@
 #include <iostream>
 #include <algorithm>
 #include <sys/ioctl.h>
-#define COLOUR_ESC "\033"
-#define COLOUR_RED     COLOUR_ESC "[31m"
-#define COLOUR_CYAN    COLOUR_ESC "[36m"
-#define COLOUR_GREY    COLOUR_ESC "[38;5;248m"
-#define COLOUR_NORMAL  COLOUR_ESC "[0m"
-#define COLOUR_GREY_BG COLOUR_ESC "[48;5;248m"
 
 #include "str.h"
 #include "buf.h"
 #include "view.h"
+#include "colour.h"
 
 extern "C" {
    int tc_init();
@@ -102,7 +97,7 @@ keyword_hilit_uline(int n)
 void
 show_ruler(int padding, int col, int width)
 {
-   std::cout << COLOUR_GREY;
+   std::cout << COLOUR_RULER;
    tc("ce");
    lnum_padding_out(padding);
 
@@ -115,7 +110,7 @@ show_ruler(int padding, int col, int width)
    tc("cr");
    for (int i = 0; i < padding + col; i++)
       tc("nd");
-   std::cout << '*' << std::endl;
+   std::cout << COLOUR_RULER_INDEX << '*' << COLOUR_NORMAL << std::endl;
 }
 
 void
@@ -143,14 +138,14 @@ View::keyword_hilit_colour(const char *s, int col, int width)
 
    for (int i = 0; i < len; i++) {
       if (i == width - 1) {
-         std::cout << COLOUR_RED << '>' << COLOUR_NORMAL;
+         std::cout << COLOUR_EOL << '>' << COLOUR_NORMAL;
          return; }
       if ((!i || buf[i - 1] != '~') && buf[i] == '~')
-         std::cout << COLOUR_RED;
+         std::cout << COLOUR_KEYWORD;
       if (i && buf[i - 1] == '~' && buf[i] != '~')
          std::cout << COLOUR_NORMAL;
       if (buf[i] == '^')
-         std::cout << COLOUR_GREY_BG;
+         std::cout << COLOUR_CURSOR;
       str.output_char(i);
       if (buf[i] == '^')
          std::cout << COLOUR_NORMAL; }
@@ -158,9 +153,9 @@ View::keyword_hilit_colour(const char *s, int col, int width)
    // EOL
    std::cout << COLOUR_NORMAL;
    if (col == len)
-      std::cout << COLOUR_GREY_BG;
+      std::cout << COLOUR_CURSOR;
    else
-      std::cout << COLOUR_GREY;
+      std::cout << COLOUR_EOL;
    std::cout << '$' << COLOUR_NORMAL;
    if (len + 1 == width) {
       std::cout << std::endl;
@@ -220,7 +215,7 @@ View::show()
 
    buf_->show(v, from, to);
 
-   std::cout << COLOUR_GREY_BG;
+   std::cout << COLOUR_HEADLINE;
    std::cout << "== " << buf_->filename_of_line(cursor_line) <<
                 (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
                 " [" << from << ":" << to << "] ==";
@@ -230,7 +225,7 @@ View::show()
 
    show_ruler(lnum_col_max + 2, cursor_column_, window_width_);
 
-   std::cout << COLOUR_GREY;
+   std::cout << COLOUR_LINE_NR;
    for (int i = from; i < to && i < 0; i++) {
       lnum_padding_out(lnum_col_max - lnum_col(i));
       std::cout << i << (i == cursor_line ? '>' : '#');
@@ -240,29 +235,28 @@ View::show()
    int n = (from < 0) ? 0 : from;
    for (auto i : v) {
       lnum_padding_out(lnum_col_max - lnum_col(n));
-      std::cout << COLOUR_GREY << n << ": " << COLOUR_NORMAL;
+      std::cout << COLOUR_LINE_NR << n << ": " << COLOUR_NORMAL;
       keyword_hilit_colour(i, n == cursor_line ? cursor_column_ : -1, window_width_ - lnum_col_max - 2);
 
       if (n == cursor_line) {
          int m = min(cursor_column_, buf_->line_length(n));
          int c = Str(i)[m];
          lnum_padding_out(lnum_col_max + 2 + m);
-         std::cout << COLOUR_GREY_BG;
+         std::cout << COLOUR_CURSOR;
          std::cout << '^';
-         std::cout << COLOUR_NORMAL;
-         std::cout << COLOUR_GREY;
          std::cout << m;
          std::cout << '#' << std::hex << c << std::dec;
          std::cout << COLOUR_NORMAL;
          eol_out(); }
       ++n; }
 
-   std::cout << COLOUR_GREY;
+   std::cout << COLOUR_LINE_NR;
    for (int i = n; i < to; i++) {
       lnum_padding_out(lnum_col_max - lnum_col(i));
       std::cout << i << (i == cursor_line ? '>' : '#');
       eol_out(); }
 
+   std::cout << COLOUR_BOTTOM;
    show_keywords();
    show_rot13();
    std::cout << COLOUR_NORMAL;

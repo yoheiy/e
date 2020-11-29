@@ -1,17 +1,11 @@
 #include <iostream>
 #include <vector>
 #include <regex.h>
-#define COLOUR_ESC "\033"
-#define COLOUR_RED     COLOUR_ESC "[31m"
-#define COLOUR_CYAN    COLOUR_ESC "[36m"
-#define COLOUR_GREY    COLOUR_ESC "[38;5;248m"
-#define COLOUR_NORMAL  COLOUR_ESC "[0m"
-#define COLOUR_GREY_BG COLOUR_ESC "[48;5;248m"
-#define COLOUR_HILIGHT COLOUR_ESC "[43m"
 
 #include "str.h"
 #include "buf.h"
 #include "isearch_view.h"
+#include "colour.h"
 
 namespace {
 
@@ -40,7 +34,7 @@ void
 show_pat_line(const char *pat)
 {
    std::cout << '[' << pat;
-   std::cout << COLOUR_GREY_BG;
+   std::cout << COLOUR_CURSOR;
    std::cout << ']';
    std::cout << COLOUR_NORMAL;
    eol_out();
@@ -115,7 +109,7 @@ ISearchView::char_delete_to_bol()
 void
 ISearchView::mode_line()
 {
-   std::cout << COLOUR_GREY_BG;
+   std::cout << COLOUR_HEADLINE;
    std::cout << "== " << buf_->filename_of_line(current_line()) <<
                 (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
                 " [isearch] ==";
@@ -151,13 +145,13 @@ ISearchView::show()
    for (int i = 0; i < window_height_; i++) {
       int x = window_offset_ + i;
       if (x < 0 || x >= ll.size()) {
-         std::cout << (i == cursor_row_ ? COLOUR_GREY_BG : COLOUR_GREY);
+         std::cout << (i == cursor_row_ ? COLOUR_CURSOR : COLOUR_EOL);
          std::cout << '$' << COLOUR_NORMAL;
          eol_out();
          continue; }
       int k = ll[x];
       lnum_padding_out(lnum_col(buf_->num_of_lines()) - lnum_col(k));
-      std::cout << (i == cursor_row_ ? COLOUR_GREY_BG : COLOUR_GREY);
+      std::cout << (i == cursor_row_ ? COLOUR_CURSOR : COLOUR_LINE_NR);
       std::cout << k << ": " << COLOUR_NORMAL;
 
       const char *s = buf_->get_line(k);
@@ -172,12 +166,12 @@ ISearchView::show()
             std::cout << COLOUR_HILIGHT;
             for (const char *q = p; q < &p[l]; q++) std::cout << *q; }
          else
-            std::cout << COLOUR_CYAN << t_sub;
+            std::cout << COLOUR_SUBST << t_sub;
          std::cout << COLOUR_NORMAL;
          s = &p[l]; }
 
       for (const char *q = s; *q; q++) std::cout << *q;
-      std::cout << COLOUR_GREY << '$' << COLOUR_NORMAL;
+      std::cout << COLOUR_EOL << '$' << COLOUR_NORMAL;
       eol_out(); }
 
 out:

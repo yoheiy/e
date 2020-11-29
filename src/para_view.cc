@@ -1,16 +1,11 @@
 #include <iostream>
 #include <vector>
-#define COLOUR_ESC "\033"
-#define COLOUR_RED     COLOUR_ESC "[31m"
-#define COLOUR_CYAN    COLOUR_ESC "[36m"
-#define COLOUR_GREY    COLOUR_ESC "[38;5;248m"
-#define COLOUR_NORMAL  COLOUR_ESC "[0m"
-#define COLOUR_GREY_BG COLOUR_ESC "[48;5;248m"
 
 #include "str.h"
 #include "buf.h"
 #include "view.h"
 #include "para_view.h"
+#include "colour.h"
 
 extern "C" {
    int tc_init();
@@ -26,7 +21,7 @@ void lnum_padding_out(int n);
 void
 ParaView::mode_line()
 {
-   std::cout << COLOUR_GREY_BG;
+   std::cout << COLOUR_HEADLINE;
    std::cout << "== " << buf_->filename_of_line(current_line()) <<
                 (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
                 " [par] ==";
@@ -51,8 +46,8 @@ ParaView::show()
       if (x < 0 || x >= ll.size()) { eol_out(); continue; }
       int k = ll[x];
       lnum_padding_out(lnum_col(buf_->num_of_lines()) - lnum_col(k));
-      std::cout << COLOUR_GREY << k << ": " << COLOUR_NORMAL;
-      if (i == cursor_row_) std::cout << COLOUR_GREY_BG;
+      std::cout << COLOUR_LINE_NR << k << ": " << COLOUR_NORMAL;
+      if (i == cursor_row_) std::cout << COLOUR_CURSOR;
       std::cout << buf_->get_line(k) << " ...";
       if (i == cursor_row_) std::cout << COLOUR_NORMAL;
       eol_out();

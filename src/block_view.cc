@@ -1,16 +1,11 @@
 #include <iostream>
 #include <vector>
-#define COLOUR_ESC "\033"
-#define COLOUR_RED     COLOUR_ESC "[31m"
-#define COLOUR_CYAN    COLOUR_ESC "[36m"
-#define COLOUR_GREY    COLOUR_ESC "[38;5;248m"
-#define COLOUR_NORMAL  COLOUR_ESC "[0m"
-#define COLOUR_GREY_BG COLOUR_ESC "[48;5;248m"
 
 #include "str.h"
 #include "buf.h"
 #include "view.h"
 #include "block_view.h"
+#include "colour.h"
 
 namespace e {
 
@@ -22,7 +17,7 @@ void show_ruler(int padding, int col, int width);
 void
 BlockView::mode_line()
 {
-   std::cout << COLOUR_GREY_BG;
+   std::cout << COLOUR_HEADLINE;
    std::cout << "== " << buf_->filename_of_line(current_line()) <<
                 (buf_->new_file() ? " N" : buf_->dirty() ? " *" : "") <<
                 " [block] ==";
@@ -78,25 +73,25 @@ BlockView::show()
    for (int i = 0; i < window_height_; i++) {
       const int x = window_offset_ + i;
       if (x < 0 || x >= ll.size()) {
-         std::cout << (i == cursor_row_ ? COLOUR_GREY_BG : COLOUR_GREY);
+         std::cout << (i == cursor_row_ ? COLOUR_CURSOR : COLOUR_EOL);
          std::cout << '$' << COLOUR_NORMAL;
          eol_out();
          continue; }
       const int k = ll[x];
 
       lnum_padding_out(lnum_col(buf_->num_of_lines()) - lnum_col(k));
-      std::cout << COLOUR_GREY << k << ": " << COLOUR_NORMAL;
+      std::cout << COLOUR_LINE_NR << k << ": " << COLOUR_NORMAL;
       if (i != cursor_row_) {
          std::cout << buf_->get_line(k);
-         std::cout << COLOUR_GREY << '$' << COLOUR_NORMAL; }
+         std::cout << COLOUR_EOL << '$' << COLOUR_NORMAL; }
       else {
          Str str { buf_->get_line(k) };
          for (int j = 0; j < str.len(); j++) {
-            if (j == cursor_column_) std::cout << COLOUR_GREY_BG;
+            if (j == cursor_column_) std::cout << COLOUR_CURSOR;
             str.output_char(j);
             if (j == cursor_column_) std::cout << COLOUR_NORMAL; }
-         std::cout << (cursor_column_ >= str.len() ? COLOUR_GREY_BG :
-                                                     COLOUR_GREY);
+         std::cout << (cursor_column_ >= str.len() ? COLOUR_CURSOR :
+                                                     COLOUR_EOL);
          std::cout << '$' << COLOUR_NORMAL; }
       eol_out(); }
 }
