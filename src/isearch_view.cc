@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <regex.h>
 #define COLOUR_ESC "\033"
 #define COLOUR_RED     COLOUR_ESC "[31m"
 #define COLOUR_CYAN    COLOUR_ESC "[36m"
@@ -117,9 +118,19 @@ ISearchView::show()
    char *t_sub = strchr(t_pat, '/');
    if (t_sub) { *t_sub = '\0'; t_sub++; }
 
+   regex_t r;
+   int err = regcomp(&r, t_pat, REG_EXTENDED);
+   if (err) {
+      char mesg[80];
+      regerror(err, &r, mesg, sizeof mesg);
+      std::cout << "REGEX ERR : " << mesg; eol_out();
+      free(t_pat);
+      regfree(&r);
+      return; }
+
    std::vector<int> ll;
    for (int i = 0; i < buf_->num_of_lines(); i++)
-      if (strstr(buf_->get_line(i), t_pat))
+      if (regexec(&r, buf_->get_line(i), 0, NULL, 0) != REG_NOMATCH)
          ll.push_back(i);
 
    for (int i = 0; i < window_height_; i++) {
@@ -135,10 +146,12 @@ ISearchView::show()
       std::cout << k << ": " << COLOUR_NORMAL;
 
       const char *s = buf_->get_line(k);
-      const int l = strlen(t_pat);
-      if (*t_pat) for (;;) {
-         const char * const p = strstr(s, t_pat);
-         if (!p) break;
+      while (*s) {
+         regmatch_t m;
+         if (regexec(&r, s, 1, &m, 0) == REG_NOMATCH) break;
+         const char * const p = &s[m.rm_so];
+         const int l = m.rm_eo - m.rm_so;
+         if (!l) { std::cout << *s++; continue; }
          for (const char *q = s; q < p; q++) std::cout << *q;
          if (!t_sub) {
             std::cout << COLOUR_HILIGHT;
@@ -152,7 +165,9 @@ ISearchView::show()
       std::cout << COLOUR_GREY << '$' << COLOUR_NORMAL;
       eol_out(); }
 
+out:
    free(t_pat);
+   regfree(&r);
 }
 
 int
