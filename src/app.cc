@@ -35,7 +35,7 @@ App::mainloop()
                tmp_mode_ == 4 ? new BlockView(&b) :
                             new View(&b));
 
-   char cmd = '\0', prev_cmd;
+   int cmd = '\0', prev_cmd;
 
    v.set_cursor_row(crow_);
    v.set_current_line(line_);
@@ -50,75 +50,75 @@ App::mainloop()
          tc("cd");
          continue; }
 
-      if (prev_cmd == ESC) {
-         switch (cmd) {
-      case '@': tmp_mode_ = cur_mode_ = 0; goto change_view;
-      case '#': tmp_mode_ = cur_mode_ = 1; goto change_view;
-      case '$': tmp_mode_ = 2; goto change_view;
-      case '%': tmp_mode_ = 3; goto change_view;
-      case '^': tmp_mode_ = 4;
+#undef CTRL
+#define CTRL(cmd) (cmd & ((1 << 5) - 1))
+#define META(cmd) (cmd | (1 << 7))
+
+      if (prev_cmd == ESC)
+         cmd = META(cmd);
+
+      switch (cmd) {
+      case META('@'): tmp_mode_ = cur_mode_ = 0; goto change_view;
+      case META('#'): tmp_mode_ = cur_mode_ = 1; goto change_view;
+      case META('$'): tmp_mode_ = 2; goto change_view;
+      case META('%'): tmp_mode_ = 3; goto change_view;
+      case META('^'): tmp_mode_ = 4;
 change_view:
          line_ = v.current_line();
          crow_ = v.cursor_row();
          delete &v; return;
-      case '<': v.window_top();     break;
-      case '>': v.window_bottom();  break;
-      case 'j': v.join(); break;
-      case 'd': v.duplicate_line(); break;
-      case 't': v.transpose_lines(); v.cursor_move_row_rel(+1); break;
-      case 'T': v.cursor_move_row_rel(-1); v.transpose_lines(); break;
-      case 'f': v.cursor_move_word_next(isalpha);  break;
-      case 'b': v.cursor_move_word_prev(isalpha);  break;
-      case 'F': v.cursor_move_word_next(isgraph);  break;
-      case 'B': v.cursor_move_word_prev(isgraph);  break;
-      case 'h': v.cursor_move_row_abs(0); break;
-      case 'l': v.cursor_move_row_end();  break;
-      case ']': v.cursor_move_para_next();  break;
-      case '[': v.cursor_move_para_prev();  break;
-      case 'v': v.page_up();   break;
-      case '+': v.set_window_height(v.get_window_height() + 1); break;
-      case '-': v.set_window_height(v.get_window_height() - 1); break;
-      case '{': b.undo_pop(-1); break;
-      case '}': b.undo_pop(+1); break;
-      case 's': b.save(); break;
-      case 'k': v.keyword_toggle(); break;
-      case 'n': v.keyword_search_next(); break;
-      case 'p': v.keyword_search_prev(); break;
-      case 'r': v.char_rotate_variant(); break;
-         }
-         tc("ho");
-         v.show();
-         tc("cd");
-         continue; }
+      case META('<'): v.window_top();     break;
+      case META('>'): v.window_bottom();  break;
+      case META('j'): v.join(); break;
+      case META('d'): v.duplicate_line(); break;
+      case META('t'): v.transpose_lines(); v.cursor_move_row_rel(+1); break;
+      case META('T'): v.cursor_move_row_rel(-1); v.transpose_lines(); break;
+      case META('f'): v.cursor_move_word_next(isalpha);  break;
+      case META('b'): v.cursor_move_word_prev(isalpha);  break;
+      case META('F'): v.cursor_move_word_next(isgraph);  break;
+      case META('B'): v.cursor_move_word_prev(isgraph);  break;
+      case META('h'): v.cursor_move_row_abs(0); break;
+      case META('l'): v.cursor_move_row_end();  break;
+      case META(']'): v.cursor_move_para_next();  break;
+      case META('['): v.cursor_move_para_prev();  break;
+      case META('v'): v.page_up();   break;
+      case META('+'): v.set_window_height(v.get_window_height() + 1); break;
+      case META('-'): v.set_window_height(v.get_window_height() - 1); break;
+      case META('{'): b.undo_pop(-1); break;
+      case META('}'): b.undo_pop(+1); break;
+      case META('s'): b.save(); break;
+      case META('k'): v.keyword_toggle(); break;
+      case META('n'): v.keyword_search_next(); break;
+      case META('p'): v.keyword_search_prev(); break;
+      case META('r'): v.char_rotate_variant(); break;
 
-      switch (cmd + '@') {
-      case 'N': v.cursor_move_row_rel(+1);  break;
-      case 'P': v.cursor_move_row_rel(-1);  break;
-      case 'F': v.cursor_move_char_rel(+1); break;
-      case 'B': v.cursor_move_char_rel(-1); break;
-      case 'A': v.cursor_move_char_abs(0);  break;
-      case 'E': v.cursor_move_char_end();   break;
-      case 'L': v.window_centre_cursor();   break;
-      case 'I': v.indent(); break;
-      case 'O': v.exdent(); break;
-      case 'G': if (tmp_mode_ != cur_mode_) {
+      case CTRL('N'): v.cursor_move_row_rel(+1);  break;
+      case CTRL('P'): v.cursor_move_row_rel(-1);  break;
+      case CTRL('F'): v.cursor_move_char_rel(+1); break;
+      case CTRL('B'): v.cursor_move_char_rel(-1); break;
+      case CTRL('A'): v.cursor_move_char_abs(0);  break;
+      case CTRL('E'): v.cursor_move_char_end();   break;
+      case CTRL('L'): v.window_centre_cursor();   break;
+      case CTRL('I'): v.indent(); break;
+      case CTRL('O'): v.exdent(); break;
+      case CTRL('G'): if (tmp_mode_ != cur_mode_) {
                    tmp_mode_ = cur_mode_;
                    delete &v; return; }
-      case 'J': if (tmp_mode_ != cur_mode_) {
+      case CTRL('J'): if (tmp_mode_ != cur_mode_) {
                    tmp_mode_ = cur_mode_;
                    line_ = v.current_line();
                    crow_ = v.cursor_row();
                    v.mode_return_ok();
                    delete &v; return; }
            else v.insert_new_line(); break;
-      case 'Y': v.insert_new_line(false); break;
-      case 'T': v.transpose_chars(); break;
-      case 'V': v.page_down(); break;
-      case 'X': tmp_mode_ = -1; tc("cl"); return;
-      case 'D': v.char_delete_forward();  break;
-      case 'H': v.char_delete_backward(); break;
-      case 'K': v.char_delete_to_eol();   break;
-      case 'U': v.char_delete_to_bol();   break;
+      case CTRL('Y'): v.insert_new_line(false); break;
+      case CTRL('T'): v.transpose_chars(); break;
+      case CTRL('V'): v.page_down(); break;
+      case CTRL('X'): tmp_mode_ = -1; tc("cl"); return;
+      case CTRL('D'): v.char_delete_forward();  break;
+      case CTRL('H'): v.char_delete_backward(); break;
+      case CTRL('K'): v.char_delete_to_eol();   break;
+      case CTRL('U'): v.char_delete_to_bol();   break;
       }
       tc("ho");
       v.show();
