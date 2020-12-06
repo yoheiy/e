@@ -36,7 +36,7 @@ VIEW
 m-@        switch view to text
 m-#        switch view to table
 m-$        switch view to par
-m-%        switch view to isearch
+m-% / ^s   switch view to isearch (to use ^s undef stop)
 m-^        switch view to block
 m-k        toggle keyword
 m-n / m-p  search keyword next / prev

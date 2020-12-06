@@ -62,6 +62,7 @@ App::mainloop()
       case META('#'): tmp_mode_ = cur_mode_ = 1; goto change_view;
       case META('$'): tmp_mode_ = 2; goto change_view;
       case META('%'): tmp_mode_ = 3; goto change_view;
+      case CTRL('s'): tmp_mode_ = 3; goto change_view;
       case META('^'): tmp_mode_ = 4;
 change_view:
          line_ = v.current_line();
